@@ -1,0 +1,158 @@
+﻿<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Simple Demo of TRC Rest APIs</title>
+    <link type="text/css" rel="stylesheet" href="index.css" />
+
+    <link type="text/css" rel="stylesheet" href="https://ajax.aspnetcdn.com/ajax/jquery.mobile/1.4.5/jquery.mobile-1.4.5.min.css" />
+
+
+
+
+</head>
+<body>
+
+
+
+
+
+<div data-role="page" id="one">
+
+    <div data-role="header">
+        <div data-role="navbar">
+            <ul>
+                <li><a href="#one" data-transition="none" >Home</a></li>
+
+                <li><a href="#search" data-transition="none" >Search</a></li>
+                <li><a href="#sheet_info" data-transition="none" >Info</a></li>
+            </ul>
+        </div>
+    </div>
+
+
+
+
+        <div role="main" class="ui-content">
+        <div id="map_canvas"
+    style="position:absolute; width:95%; height:95%;">
+
+
+        </div>
+
+    <div id="info"></div>
+            </div>
+
+
+
+
+
+</div>
+
+<div data-role="page" id="p" data-title="Details">
+
+    <p>
+    <div id="the_list">
+        <ul data-role="listview" data-inset="true" data-filter="true" data-filter-placeholder="Search person..."  data-divider-theme="a" name="set" id="set">
+        </ul>
+    </div>
+    <div id="the_details" style="display: none;">
+        <form>
+            <div id="the_details_form" data-role="fieldcontain">
+
+
+
+
+
+
+            </div>
+            <fieldset class="ui-grid-a">
+
+            <a href="javascript:void(0)" onclick="back_to_list();"  class="ui-btn ui-shadow ui-corner-all ui-btn-inline ui-icon-back ui-btn-icon-left">Back to list"</a>
+                <a href="javascript:void(0)"  id="details_save_button" class="ui-btn ui-shadow ui-corner-all ui-btn-inline ui-icon-check ui-btn-icon-left">Save</a>
+
+            </fieldset>
+
+
+        </form>
+    </div>
+
+
+
+
+</div>
+<div data-role="page" id="sheet_info" data-title="Search"
+     data-position-to="window" data-transition="pop"
+     data-overlay-theme="a">
+
+    <div id="sheet_info_form" data-role="fieldcontain">
+        </div>
+    <p><a href="#one" data-rel="back" class="ui-btn ui-shadow ui-corner-all ui-btn-inline ui-icon-back ui-btn-icon-left">Back to map</a></p>
+
+
+</div>
+<div data-role="page" id="search" data-title="Search"
+     data-position-to="window" data-transition="pop"
+     data-overlay-theme="a">
+
+    <div id="the_search_list">
+        <ul data-role="listview" data-inset="true" data-filter="true" data-filter-placeholder="Search person..."  data-divider-theme="a" name="set_in_search" id="set_in_search">
+        </ul>
+    </div>
+
+
+    <div id="the_details_search" style="display: none;">
+        <form>
+            <div id="the_details_form_search" data-role="fieldcontain">
+
+
+
+
+
+
+
+            </div>
+            <fieldset class="ui-grid-a">
+
+                <a href="javascript:void(0)" onclick="back_to_search_list();"   class="ui-btn ui-shadow ui-corner-all ui-btn-inline ui-icon-back ui-btn-icon-left">Back to list"</a>
+                <a href="javascript:void(0)" onclick="back_to_list();"  class="ui-btn ui-shadow ui-corner-all ui-btn-inline ui-icon-check ui-btn-icon-left">Save</a>
+
+            </fieldset>
+
+
+        </form>
+    </div>
+
+</div>
+
+</body>
+<script src="https://maps.googleapis.com/maps/api/js?sensor=false" type="text/javascript"></script>
+
+<script src="https://ajax.aspnetcdn.com/ajax/jQuery/jquery-2.1.4.min.js">
+</script>
+
+<script src="https://ajax.aspnetcdn.com/ajax/jquery.mobile/1.4.5/jquery.mobile-1.4.5.min.js">
+</script>
+
+
+<script src="juimaps/min/jquery.ui.map.min.js">
+</script>
+
+
+<script src="MobileMapView.js"> </script>
+<script src="https://trcanvasdata.blob.core.windows.net/code/trc.js"> </script>
+<script src="https://trcanvasdata.blob.core.windows.net/code/plugin.js"></script>
+<script type="text/javascript">
+    $( document ).ready(function() {
+        $.mobile.loading( 'show', {
+            text: 'Populating map',
+            textVisible: true,
+            theme: 'e',
+            html: ""
+        });
+   //LocalDebug_OnClick_AccessCodeAndLoadSheet();
+    });
+</script>
+</html>

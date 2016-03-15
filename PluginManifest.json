@@ -1,0 +1,10 @@
+﻿{
+    // ID must be unique on the gallery
+    "Id": "Map",
+    "Name": "Map View",
+    "Author" :  "Kentastic",
+    "Website" :  "https://github.com/Voter-Science/TRC-API-Samples",
+    "Description": "A map view for editing",        
+    "Version": "1.0.0", // User SemVer
+    "Tags": [ "map" ]
+}
