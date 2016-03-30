@@ -98,6 +98,7 @@
 
     <div id="local_storage_sheet_form" data-role="fieldcontain">
     </div>
+    <button onclick="populate_local_storage_screen()">Refresh</button>
     <p><a href="#one" data-rel="back" class="ui-btn ui-shadow ui-corner-all ui-btn-inline ui-icon-back ui-btn-icon-left">Back to map</a></p>
 
 
@@ -147,6 +148,8 @@
 </div>
 
 </body>
+</html>
+
 <script src="https://maps.googleapis.com/maps/api/js?sensor=false" type="text/javascript"></script>
 
 <script src="jq/jquery-2.1.4.min.js">
@@ -163,6 +166,7 @@
 
 
 
+<script src="localStore.js"> </script>
 <script src="MobileMapView.js"> </script>
 <script src="https://trcanvasdata.blob.core.windows.net/code/trc.js"> </script>
 <script src="https://trcanvasdata.blob.core.windows.net/code/plugin.js"></script>
@@ -172,4 +176,4 @@
    //LocalDebug_OnClick_AccessCodeAndLoadSheet();
     });
 </script>
-</html>
+
