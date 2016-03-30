@@ -10,10 +10,6 @@
 </head>
 <body>
 
-
-
-
-
 <div data-role="page" id="one">
 
     <div data-role="header">
@@ -29,9 +25,6 @@
         </div>
     </div>
 
-
-
-
     <div role="main" class="ui-content">
         <div id="map_canvas"
              style="position:absolute; width:95%; height:95%;">
@@ -41,15 +34,9 @@
 
         <div id="info"></div>
     </div>
-
-
-
-
-
 </div>
 
 <div data-role="page" id="p" data-title="Details">
-
     <p>
     <div id="the_list">
         <ul data-role="listview" data-inset="true" data-filter="true" data-filter-placeholder="Search person..."  data-divider-theme="a" name="set" id="set">
@@ -60,28 +47,15 @@
     <div id="the_details" style="display: none;">
         <form>
             <div id="the_details_form" data-role="fieldcontain">
-
-
-
-
-
-
             </div>
             <fieldset class="ui-grid-a">
-
                 <a href="javascript:void(0)" onclick="back_to_list();"  class="ui-btn ui-shadow ui-corner-all ui-btn-inline ui-icon-back ui-btn-icon-left">Cancel</a>
                 <a href="javascript:void(0)"  id="details_save_button" class="ui-btn ui-shadow ui-corner-all ui-btn-inline ui-icon-check ui-btn-icon-left">Save</a>
-
             </fieldset>
-
-
         </form>
     </div>
-
-
-
-
 </div>
+
 <div data-role="page" id="sheet_info" data-title="Search"
      data-position-to="window" data-transition="pop"
      data-overlay-theme="a">
@@ -92,6 +66,7 @@
 
 
 </div>
+
 <div data-role="page" id="local_storage_sheet" data-title="Search"
      data-position-to="window" data-transition="pop"
      data-overlay-theme="a">
@@ -100,9 +75,8 @@
     </div>
     <button onclick="refresh_populate_local_storage_screen()">Refresh</button>
     <p><a href="#one" data-rel="back" class="ui-btn ui-shadow ui-corner-all ui-btn-inline ui-icon-back ui-btn-icon-left">Back to map</a></p>
-
-
 </div>
+
 <div data-role="page" id="search" data-title="Search"
      data-position-to="window" data-transition="pop"
      data-overlay-theme="a">
@@ -119,29 +93,16 @@
             name="set_in_search" id="set_in_search">
         </ul>
         <a href="#one" data-rel="back" class="ui-btn ui-shadow ui-corner-all ui-btn-inline ui-icon-back ui-btn-icon-left">Back to map</a>
-
     </div>
-
 
     <div id="the_details_search" style="display: none;">
         <form>
             <div id="the_details_form_search" data-role="fieldcontain">
-
-
-
-
-
-
-
             </div>
             <fieldset class="ui-grid-a">
-
                 <a href="javascript:void(0)" onclick="back_to_search_list();"   class="ui-btn ui-shadow ui-corner-all ui-btn-inline ui-icon-back ui-btn-icon-left">Cancel"</a>
                 <a href="javascript:void(0)" onclick="back_to_list();"  class="ui-btn ui-shadow ui-corner-all ui-btn-inline ui-icon-check ui-btn-icon-left">Save</a>
-
             </fieldset>
-
-
         </form>
     </div>
 
@@ -152,19 +113,12 @@
 
 <script src="https://maps.googleapis.com/maps/api/js?sensor=false" type="text/javascript"></script>
 
-<script src="jq/jquery-2.1.4.min.js">
-</script>
+<script src="jq/jquery-2.1.4.min.js"></script>
 
-<script src="jq/jquery.mobile-1.4.5.min.js">
-</script>
-<script src="juimaps/min/jquery.ui.map.min.js">
-</script>
-<script src="moment-with-locales.js">
-</script>
-<script src="lz-string.min.js">
-</script>
-
-
+<script src="jq/jquery.mobile-1.4.5.min.js"></script>
+<script src="juimaps/min/jquery.ui.map.min.js"></script>
+<script src="moment-with-locales.js"></script>
+<script src="lz-string.min.js"></script>
 
 <script src="localStore.js"> </script>
 <script src="MobileMapView.js"> </script>
