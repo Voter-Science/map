@@ -75,7 +75,7 @@ function parse2(x) {
 }
 function mapSheet(info, data) {
     populate_info_screen(info);
-    populate_local_storage_screen();
+    populate_local_storage_screen("");
     var numRows = info.CountRecords;
     {
         var t = $('<thead>').append($('<tr>'));
@@ -284,12 +284,20 @@ function create_field(prefix, name, label, value, readonly, type, PossibleValues
     }
     return _return;
 }
-function populate_local_storage_screen() {
+function refresh_populate_local_storage_screen() {
+    _sheetCache.flush(function (success) {
+        var msg = success ? "Successfully connected to server." : "Can't connect to server. Are you online?";
+        populate_local_storage_screen(msg);
+    });
+}
+function populate_local_storage_screen(msg) {
     var x = _sheetCache.getTotalNotYetUploaded();
     var y = _sheetCache.getTotalUploaded();
-    var label = x + " results not yet uploaded. (" + y + " results uploaded)";
+    // var label = x + " results not yet uploaded. (" + y + " results uploaded)";
     $("#local_storage_sheet_form").html('');
-    $("#local_storage_sheet_form").append(create_field("local_", "LocalChanges", "Has outstanding changes:", label, true, "Text", null));
+    $("#local_storage_sheet_form").append(create_field("local_", "LocalChanges", "Number of changes not yet uploaded:", x, true, "Text", null));
+    $("#local_storage_sheet_form").append(create_field("local_", "SavedChanges", "Number of changes uploaded:", y, true, "Text", null));
+    $("#local_storage_sheet_form").append(create_field("local_", "LastStatus", "Last upload attempt:", msg, true, "Text", null));
 }
 function populate_info_screen(info) {
     $("#sheet_info_form").html('');

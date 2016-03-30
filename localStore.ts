@@ -99,12 +99,11 @@ class SheetCache {
         // Timer will flush to the server.
         this.create_timer();               
 
-        this.save_to_trc(); // Optimistically try to save ahead of the background flusher
-        /*
-        trcPostSheetUpdateCell(this._sheetRef, recId, columnName, newValue,() => {
-            localStorage.removeItem(key);
-            this._counter--;
-        });*/
+        // Optimistically try to save ahead of the background flusher
+        // USe exact same logic as background flusher.
+        this.save_to_trc(
+            (success) => { }
+         );
     }
 
     // Helper. 
@@ -146,14 +145,24 @@ class SheetCache {
         this._timerStarted = true;
         setInterval(
             () => {
-                this.save_to_trc();
+                this.save_to_trc( (success) => { });
             },
             60000  /* 60000 ms = 60 sec */
             );
     }
 
+    // Public entry point to request immediate flush of offline data. 
+    // Invoke the callback(true) if successfully flushed. callback(false) if errors, such as offline.  
+    public flush(
+        doneFunc: (success:boolean) => void
+        ): void {
+        this.save_to_trc(doneFunc);
+    }
+
     // Attempt to flush outstanding local changes to the server
-    private save_to_trc() {
+    private save_to_trc(
+        doneFunc: (success: boolean) => void
+    ) {
         var l: IKeyValue[] = [];
 
         for (var i = 0; i < localStorage.length; i++) {
@@ -164,28 +173,38 @@ class SheetCache {
         }
 
         // Flush all until we get a failure
-        this.flush(l, 0);
+        this.flush_worker(l, 0, doneFunc);
     }
 
-    private flush(l: IKeyValue[], i: number): void {        
+    private flush_worker(
+        l: IKeyValue[], // list of possible keys to flush. 
+        i: number, // index into l 
+         doneFunc: (success: boolean) => void
+    ): void {        
         if (i >= l.length) {
+            doneFunc(true);
             return;
         }
         var x = l[i];
 
-        // Somebody alreayd flushed this item. Cancel the chain and wait for the next sweep.
+        // Somebody already flushed this item. Cancel the chain and wait for the next sweep.
         if (localStorage.getItem(x.key) == null) {            
+            doneFunc(false);
             return;
         }
         trcPostSheetUpdateCell2(this._sheetRef, x.recId, x.columnName, x.newValue,() => {
             this._totalUploaded++;
-            this._counter--;
+
+            if (localStorage.getItem(x.key) != null) {
+                this._counter--; // don't double-delete
+            }
             localStorage.removeItem(x.key);
 
             // Try the next one 
-            this.flush(l, i + 1);
+            this.flush_worker(l, i + 1, doneFunc);
         },() => {
-                // On network failure, stop trying to flush. 
+            // On network failure, stop trying to flush. 
+            doneFunc(false);
         });
     }
 }

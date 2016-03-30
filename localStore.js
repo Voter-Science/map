@@ -60,12 +60,9 @@ var SheetCache = (function () {
         localStorage.setItem(key, newValue);
         // Timer will flush to the server.
         this.create_timer();
-        this.save_to_trc(); // Optimistically try to save ahead of the background flusher
-        /*
-        trcPostSheetUpdateCell(this._sheetRef, recId, columnName, newValue,() => {
-            localStorage.removeItem(key);
-            this._counter--;
-        });*/
+        // Optimistically try to save ahead of the background flusher
+        // USe exact same logic as background flusher.
+        this.save_to_trc(function (success) { });
     };
     // Helper. 
     SheetCache.startsWith = function (x, searchString) {
@@ -99,11 +96,16 @@ var SheetCache = (function () {
         }
         this._timerStarted = true;
         setInterval(function () {
-            _this.save_to_trc();
+            _this.save_to_trc(function (success) { });
         }, 60000 /* 60000 ms = 60 sec */);
     };
+    // Public entry point to request immediate flush of offline data. 
+    // Invoke the callback(true) if successfully flushed. callback(false) if errors, such as offline.  
+    SheetCache.prototype.flush = function (doneFunc) {
+        this.save_to_trc(doneFunc);
+    };
     // Attempt to flush outstanding local changes to the server
-    SheetCache.prototype.save_to_trc = function () {
+    SheetCache.prototype.save_to_trc = function (doneFunc) {
         var l = [];
         for (var i = 0; i < localStorage.length; i++) {
             var x = SheetCache.fromLocalStorageKey(i);
@@ -112,26 +114,33 @@ var SheetCache = (function () {
             }
         }
         // Flush all until we get a failure
-        this.flush(l, 0);
+        this.flush_worker(l, 0, doneFunc);
     };
-    SheetCache.prototype.flush = function (l, i) {
+    SheetCache.prototype.flush_worker = function (l, // list of possible keys to flush. 
+        i, // index into l 
+        doneFunc) {
         var _this = this;
         if (i >= l.length) {
+            doneFunc(true);
             return;
         }
         var x = l[i];
-        // Somebody alreayd flushed this item. Cancel the chain and wait for the next sweep.
+        // Somebody already flushed this item. Cancel the chain and wait for the next sweep.
         if (localStorage.getItem(x.key) == null) {
+            doneFunc(false);
             return;
         }
         trcPostSheetUpdateCell2(this._sheetRef, x.recId, x.columnName, x.newValue, function () {
             _this._totalUploaded++;
-            _this._counter--;
+            if (localStorage.getItem(x.key) != null) {
+                _this._counter--; // don't double-delete
+            }
             localStorage.removeItem(x.key);
             // Try the next one 
-            _this.flush(l, i + 1);
+            _this.flush_worker(l, i + 1, doneFunc);
         }, function () {
             // On network failure, stop trying to flush. 
+            doneFunc(false);
         });
     };
     return SheetCache;
