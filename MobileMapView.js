@@ -73,6 +73,52 @@ function parse2(x) {
     }
     return parseFloat(x);
 }
+// Represent combined party code at a household
+var HouseholdPartyCode;
+(function (HouseholdPartyCode) {
+    HouseholdPartyCode[HouseholdPartyCode["Unknown"] = 0] = "Unknown";
+    HouseholdPartyCode[HouseholdPartyCode["AllGop"] = 1] = "AllGop";
+    HouseholdPartyCode[HouseholdPartyCode["AllDem"] = 2] = "AllDem";
+    HouseholdPartyCode[HouseholdPartyCode["Mixed"] = 3] = "Mixed";
+})(HouseholdPartyCode || (HouseholdPartyCode = {}));
+function getPartyImage(x) {
+    if (x == HouseholdPartyCode.AllDem) {
+        return "marker_Blue.png";
+    }
+    if (x == HouseholdPartyCode.AllGop) {
+        return "marker_Red.png";
+    }
+    if (x == HouseholdPartyCode.Mixed) {
+        return "marker_Purple.png";
+    }
+    if (x == HouseholdPartyCode.Unknown) {
+        return "marker_Unknown.png";
+    }
+}
+function getPartyCode(party) {
+    if (party == '1' || party == '2') {
+        return HouseholdPartyCode.AllGop;
+    }
+    if (party == '4' || party == '5') {
+        return HouseholdPartyCode.AllDem;
+    }
+    return HouseholdPartyCode.Unknown;
+}
+function mergePartyCode(a, b) {
+    if (a == HouseholdPartyCode.Unknown) {
+        return b;
+    }
+    if (b == HouseholdPartyCode.Unknown) {
+        return a;
+    }
+    if (a == HouseholdPartyCode.Mixed || b == HouseholdPartyCode.Mixed) {
+        return HouseholdPartyCode.Mixed;
+    }
+    if (a == b) {
+        return a;
+    }
+    return HouseholdPartyCode.Mixed;
+}
 function mapSheet(info, data) {
     populate_info_screen(info);
     populate_local_storage_screen("");
@@ -88,11 +134,13 @@ function mapSheet(info, data) {
     }
     var houseHolds = [];
     for (var iRow = 0; iRow < numRows; iRow++) {
+        var party = data["Party"][iRow];
         var itm = {
             lat: parse2(data["Lat"][iRow]),
             long: parse2(data["Long"][iRow]),
             address: data["Address"][iRow],
             irows: [iRow],
+            partyX: getPartyCode(party),
             altered: _sheetCache.isModifiedByIndex(iRow)
         };
         var allready_in_idx = -1;
@@ -103,6 +151,7 @@ function mapSheet(info, data) {
                 allready_in_idx = i;
                 if (itm.altered) {
                     houseHolds[allready_in_idx].altered = true;
+                    houseHolds[allready_in_idx].partyX = mergePartyCode(houseHolds[allready_in_idx].partyX, itm.partyX);
                 }
                 return;
             }
@@ -151,7 +200,7 @@ function mapSheet(info, data) {
             $('#map_canvas').gmap('addMarker', {
                 'position': new google.maps.LatLng(entry.lat, entry.long),
                 'bounds': true,
-                'icon': (entry.altered ? 'marker_grey.png' : null),
+                'icon': (entry.altered ? 'marker_grey.png' : getPartyImage(entry.partyX)),
                 'iRow': entry.irows
             }).click(function () {
                 var nextId = 1;
@@ -223,14 +272,21 @@ function multiple_choise_widget(name, label, value, PossibleValues) {
     ret += '</select> </div>';
     return ret;
 }
-function multiple_choise_widget_horizontal(name, label, value, PossibleValues) {
+function multiple_choise_widget_horizontal(name, label, value, // current value 
+    PossibleValues, images // map of values --> Image name 
+    ) {
     var ret = '<fieldset id="' + name + '" data-role="controlgroup" data-type="horizontal" >';
     ret += '        <legend>' + label + ':</legend>';
     $.each(PossibleValues, function (key, ivalue) {
+        var imgHtml = "";
+        var img = images[ivalue];
+        if (img != undefined) {
+            imgHtml = "<img src='" + img + "'/>";
+        }
         ret += ' <input type="radio" ' +
             'data-selected_value="' + ivalue + '"' +
             'name="' + name + '-choice" id="' + name + key + '" ' + (ivalue == value ? 'value="on" checked="checked"' : '') + '>';
-        ret += ' <label for="' + name + key + '">' + ivalue + '</label>';
+        ret += ' <label for="' + name + key + '">' + ivalue + imgHtml + '</label>';
     });
     ret += ' </fieldset>';
     return ret;
@@ -261,7 +317,15 @@ function create_field(prefix, name, label, value, readonly, type, PossibleValues
         var _return = '';
     }
     else if (name == 'Party' || name == 'Supporter') {
-        var _return = multiple_choise_widget_horizontal(prefix + name, label, value, PossibleValues);
+        var imgPartyMap = {
+            '0': "PartyLabel-0.png",
+            '1': "GopLogo.png",
+            '2': "GopLogoSoft.png",
+            '3': "PartyLabel-3.png",
+            '4': "DemLogoSoft.png",
+            '5': "DemLogo.png"
+        };
+        var _return = multiple_choise_widget_horizontal(prefix + name, label, value, PossibleValues, imgPartyMap);
     }
     else if (type == 'Text') {
         if (PossibleValues == null) {

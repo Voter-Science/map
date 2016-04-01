@@ -96,12 +96,63 @@ function parse2(x: string): number {
     return parseFloat(x);
 }
 
+// Represent combined party code at a household
+enum HouseholdPartyCode {
+    Unknown,
+    AllGop,
+    AllDem,
+    Mixed
+}
+
 interface IHousehold {
     lat: number;
     long: number;
     address: string;
     irows: number[]; // indices into sheet that are at this address
     altered: boolean;
+    partyX: HouseholdPartyCode; 
+}
+
+function getPartyImage(x: HouseholdPartyCode) {
+    if (x == HouseholdPartyCode.AllDem) {
+        return "marker_Blue.png";
+    }
+    if (x == HouseholdPartyCode.AllGop) {
+        return "marker_Red.png";
+    }
+    if (x == HouseholdPartyCode.Mixed) {
+        return "marker_Purple.png";
+    }
+    if (x == HouseholdPartyCode.Unknown) {
+        return "marker_Unknown.png";
+    }
+}
+
+function getPartyCode(party: string): HouseholdPartyCode {    
+    if (party == '1' || party == '2') {
+        return HouseholdPartyCode.AllGop;
+    } 
+    if (party == '4' || party == '5') {
+        return HouseholdPartyCode.AllDem;
+    }
+    return HouseholdPartyCode.Unknown;
+}
+
+function mergePartyCode(a: HouseholdPartyCode, b: HouseholdPartyCode): HouseholdPartyCode {
+    if (a == HouseholdPartyCode.Unknown) {
+        return b;
+    }
+    if (b == HouseholdPartyCode.Unknown) {
+        return a;
+    }
+    if (a == HouseholdPartyCode.Mixed || b == HouseholdPartyCode.Mixed) {
+        return HouseholdPartyCode.Mixed;
+    }
+
+    if (a == b) { // same. Both R or both D.
+        return a;
+    }
+    return HouseholdPartyCode.Mixed;    
 }
 
 function mapSheet(info: ISheetInfoResult, data: ISheetContents) {
@@ -126,11 +177,15 @@ function mapSheet(info: ISheetInfoResult, data: ISheetContents) {
     var houseHolds: IHousehold[] = [];
 
     for (var iRow = 0; iRow < numRows; iRow++) {
-        var itm: IHousehold= {
+        var party = data["Party"][iRow];
+
+
+        var itm: IHousehold = {
             lat: parse2(data["Lat"][iRow]),
             long: parse2(data["Long"][iRow]),
             address: data["Address"][iRow],
             irows: [iRow],
+            partyX : getPartyCode(party),
             altered: _sheetCache.isModifiedByIndex(iRow)
         };
         var allready_in_idx = -1;
@@ -142,6 +197,7 @@ function mapSheet(info: ISheetInfoResult, data: ISheetContents) {
                 allready_in_idx = i;
                 if (itm.altered) {
                     houseHolds[allready_in_idx].altered = true;
+                    houseHolds[allready_in_idx].partyX = mergePartyCode(houseHolds[allready_in_idx].partyX, itm.partyX);
                 }
                 return;
             }
@@ -209,7 +265,7 @@ function mapSheet(info: ISheetInfoResult, data: ISheetContents) {
             $('#map_canvas').gmap('addMarker', {
                 'position': new google.maps.LatLng(entry.lat, entry.long),
                 'bounds': true,
-                'icon': (entry.altered ? 'marker_grey.png' : null),
+                'icon': (entry.altered ? 'marker_grey.png' : getPartyImage(entry.partyX)),
                 'iRow': entry.irows
             }).click(function () {
                 var nextId = 1;
@@ -227,14 +283,7 @@ function mapSheet(info: ISheetInfoResult, data: ISheetContents) {
                         content += ' <li data-role="list-divider">Address: ' + last_address + '</li>';
                     }
                     var d = new Date(Date.parse(data["Birthday"][entry]));
-
-
-
                     content += '<li id="' + entry + '"><a href="#">' + data["FirstName"][entry] + " " + data["LastName"][entry] + ', ' + _calculateAge(d) + data["Gender"][entry] + '</a></li>';
-
-
-
-
                     $("#set").append(content);
                     nextId++;
                 });
@@ -253,11 +302,6 @@ function mapSheet(info: ISheetInfoResult, data: ISheetContents) {
                 $('#set').listview('refresh');
                 $('#set').delegate('li', 'click',
                     function () {
-
-
-
-
-
                         if ($(this).prop('id') != 'NaN') {
                             ///var id=$(this).attr('id');
                             var id = $(this).prop('id');
@@ -269,9 +313,7 @@ function mapSheet(info: ISheetInfoResult, data: ISheetContents) {
                                 console.log("ID before save" + id);
                                 save_entry("details_", id, data, info);
                             });
-
-
-
+                            
                             $.each(info.Columns, function (key, ivalue) {
                                 $("#the_details_form").append(create_field("details_", ivalue.Name, ivalue.DisplayName, data[ivalue.Name][id], ivalue.IsReadOnly, ivalue.Type, ivalue.PossibleValues));
                                 initialize_field("details_", ivalue.Name, ivalue.Type, ivalue.PossibleValues);
@@ -323,7 +365,13 @@ function multiple_choise_widget(name,label,value,PossibleValues){
     return ret;
 }
 
-function multiple_choise_widget_horizontal(name,label,value,PossibleValues){
+function multiple_choise_widget_horizontal(
+    name: string,
+    label: string,
+    value: string, // current value 
+    PossibleValues: string[],
+    images // map of values --> Image name 
+) {
 
     var ret='<fieldset id="'+name+'" data-role="controlgroup" data-type="horizontal" >';
 
@@ -331,11 +379,16 @@ function multiple_choise_widget_horizontal(name,label,value,PossibleValues){
 
     $.each( PossibleValues, function( key, ivalue ) {
 
+        var imgHtml = "";
+        var img = images[ivalue];
+        if (img != undefined) {
+            imgHtml = "<img src='" + img + "'/>";
+        }
 
         ret+=' <input type="radio" ' +
             'data-selected_value="'+ivalue+'"' +
             'name="'+name+'-choice" id="'+name+key+'" '+(ivalue==value?'value="on" checked="checked"':'')+'>';
-        ret+=' <label for="'+name+key+'">'+ivalue+'</label>';
+        ret += ' <label for="' + name + key + '">' + ivalue + imgHtml + '</label>';
 
     });
 
@@ -379,8 +432,23 @@ function create_field(prefix,name,label,value,readonly,type,PossibleValues){
 
     if ($.inArray(name, noshowColumns)>-1){
         var _return='';
-    }else if( name=='Party' || name=='Supporter' ){
-        var _return = multiple_choise_widget_horizontal(prefix+name,label,value,PossibleValues);
+    }
+    /*
+    else if (name == 'Party') {
+        var x = multiple_choise_widget_horizontal(prefix + name, label, value, PossibleValues);
+        var _return  = "<img src='GopLogo.png'/>" + x + "<img src='DemLogo.png'/>";
+    }*/
+    else if (name == 'Party' || name == 'Supporter') {
+        var imgPartyMap =
+            {
+                '0': "PartyLabel-0.png",
+                '1': "GopLogo.png",
+                '2': "GopLogoSoft.png",
+                '3': "PartyLabel-3.png",
+                '4': "DemLogoSoft.png",
+                '5': "DemLogo.png"
+            };
+        var _return = multiple_choise_widget_horizontal(prefix + name, label, value, PossibleValues, imgPartyMap);
     }else if (type=='Text'){
         if(PossibleValues==null){
             if(readonly){
