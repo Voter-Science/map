@@ -165,14 +165,20 @@ function mapSheet(info: ISheetInfoResult, data: ISheetContents) {
     var numRows = info.CountRecords;
 
     {
-        var t = $('<thead>').append($('<tr>'));
         for (var i = 0; i < info.Columns.length; i++) {
             var columnInfo = info.Columns[i];
-            var displayName = columnInfo.DisplayName;
-            var tCell1 = $('<td>').text(displayName);
-            t = t.append(tCell1);
+            if (columnInfo.Name == "Party") {
+                // Touchup party possible values if missing. 
+                if (columnInfo.PossibleValues == null) {
+                    columnInfo.PossibleValues = ['0', '1', '2', '3', '4', '5'];
+                }
+            } else if (columnInfo.Name == "Supporter") {
+            }
+            else if (columnInfo.PossibleValues != null) {
+                // Any multiple-choice question is optional.                 
+                columnInfo.PossibleValues.unshift("");
+            }
         }
-
     }
     var houseHolds: IHousehold[] = [];
 
@@ -417,7 +423,25 @@ function initialize_field(prefix,name,type,PossibleValues){
     }
 }
 
-function create_field(prefix,name,label,value,readonly,type,PossibleValues){
+// Logos for standard party Id. 
+var _imgPartyMap =
+    {
+        '0': "PartyLabel-0.png",
+        '1': "GopLogo.png",
+        '2': "GopLogoSoft.png",
+        '3': "PartyLabel-3.png",
+        '4': "DemLogoSoft.png",
+        '5': "DemLogo.png"
+    };
+
+function create_field(
+    prefix : string,
+    name : string,
+    label : string,
+    value : any,
+    readonly : boolean,
+    type,
+    PossibleValues: string[]) {
 
     if(fixValuesColumns[label]!=null){
         value=fixValuesColumns[label](value);
@@ -427,28 +451,11 @@ function create_field(prefix,name,label,value,readonly,type,PossibleValues){
         label=fixLabelsColumns[label];
     }
 
-
-
-
     if ($.inArray(name, noshowColumns)>-1){
         var _return='';
     }
-    /*
-    else if (name == 'Party') {
-        var x = multiple_choise_widget_horizontal(prefix + name, label, value, PossibleValues);
-        var _return  = "<img src='GopLogo.png'/>" + x + "<img src='DemLogo.png'/>";
-    }*/
     else if (name == 'Party' || name == 'Supporter') {
-        var imgPartyMap =
-            {
-                '0': "PartyLabel-0.png",
-                '1': "GopLogo.png",
-                '2': "GopLogoSoft.png",
-                '3': "PartyLabel-3.png",
-                '4': "DemLogoSoft.png",
-                '5': "DemLogo.png"
-            };
-        var _return = multiple_choise_widget_horizontal(prefix + name, label, value, PossibleValues, imgPartyMap);
+        var _return = multiple_choise_widget_horizontal(prefix + name, label, value, PossibleValues, _imgPartyMap);
     }else if (type=='Text'){
         if(PossibleValues==null){
             if(readonly){

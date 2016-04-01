@@ -9,9 +9,10 @@ var SheetCache = (function () {
         this._counter = 0;
         this._modified = new Array(data["RecId"].length);
         this._totalUploaded = 0;
+        this._keyPrefix = "_xsave:2:" + sheetRef.SheetId + ":";
         // Initial from previous offline 
         for (var i = 0; i < localStorage.length; i++) {
-            var x = SheetCache.fromLocalStorageKey(i);
+            var x = this.fromLocalStorageKey(i);
             if (x != null) {
                 this._counter++;
             }
@@ -27,23 +28,23 @@ var SheetCache = (function () {
         return this._counter > 0;
     };
     // Local keys have format:
-    // {prefix}:{version}:{recId}:{columnName} = {newValue}
-    SheetCache.toKey = function (recId, columnName) {
-        var key = "_xsave:1:" + recId + ":" + columnName;
+    // {prefix}:{version}:{sheetid}:{recId}:{columnName} = {newValue}
+    SheetCache.prototype.toKey = function (recId, columnName) {
+        var key = this._keyPrefix + recId + ":" + columnName;
         return key;
     };
     // inverse of toKey()
     // null if no match 
-    SheetCache.fromLocalStorageKey = function (i) {
-        if (!SheetCache.startsWith(localStorage.key(i), "_xsave:1")) {
+    SheetCache.prototype.fromLocalStorageKey = function (i) {
+        if (!SheetCache.startsWith(localStorage.key(i), this._keyPrefix)) {
             return null;
         }
         var key = localStorage.key(i);
         var parts = key.split(':'); // _prefix:ver:recId:columnName                
         var x = {
             key: key,
-            recId: parts[2],
-            columnName: parts[3],
+            recId: parts[3],
+            columnName: parts[4],
             newValue: localStorage[key]
         };
         return x;
@@ -51,7 +52,7 @@ var SheetCache = (function () {
     // Either post to server, or save to local storage
     SheetCache.prototype.save = function (recId, columnName, newValue) {
         // Save to LocalStorage. When successfully uploaded to server, remove. 
-        var key = SheetCache.toKey(recId, columnName);
+        var key = this.toKey(recId, columnName);
         // If already exists, don't bump up count. 
         // Overwrite the value so we only send up the latest result. 
         if (localStorage.getItem(key) == null) {
@@ -108,7 +109,7 @@ var SheetCache = (function () {
     SheetCache.prototype.save_to_trc = function (doneFunc) {
         var l = [];
         for (var i = 0; i < localStorage.length; i++) {
-            var x = SheetCache.fromLocalStorageKey(i);
+            var x = this.fromLocalStorageKey(i);
             if (x != null) {
                 l.push(x);
             }
