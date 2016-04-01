@@ -24,6 +24,8 @@ class SheetCache {
     // For diagnostics, track successful upload count
     private _totalUploaded: number; 
 
+    private _keyPrefix: string; // prefix for keys in local storage
+
     public constructor(
         sheetRef: ISheetReference,
         data: ISheetContents) {
@@ -33,9 +35,11 @@ class SheetCache {
         this._modified = new Array(data["RecId"].length);
         this._totalUploaded = 0;
 
+        this._keyPrefix = "_xsave:2:" + sheetRef.SheetId + ":";
+
         // Initial from previous offline 
         for (var i = 0; i < localStorage.length; i++) {
-            var x = SheetCache.fromLocalStorageKey(i);
+            var x = this.fromLocalStorageKey(i);
             if (x != null) {
                 this._counter++;
             }
@@ -55,16 +59,16 @@ class SheetCache {
     }
 
     // Local keys have format:
-    // {prefix}:{version}:{recId}:{columnName} = {newValue}
-    private static toKey(recId : string, columnName: string)  :string {
-      var key = "_xsave:1:" + recId + ":" + columnName;
+    // {prefix}:{version}:{sheetid}:{recId}:{columnName} = {newValue}
+    private toKey(recId : string, columnName: string)  :string {
+        var key = this._keyPrefix + recId + ":" + columnName;
       return key;
     }
 
     // inverse of toKey()
     // null if no match 
-    private static fromLocalStorageKey(i : number) : IKeyValue {
-        if (!SheetCache.startsWith(localStorage.key(i), "_xsave:1")) {
+    private fromLocalStorageKey(i: number): IKeyValue {
+        if (!SheetCache.startsWith(localStorage.key(i), this._keyPrefix)) {
             return null;
         }
 
@@ -73,8 +77,8 @@ class SheetCache {
 
         var x : IKeyValue = {        
             key : key,
-            recId : parts[2],
-            columnName : parts[3],
+            recId : parts[3],
+            columnName : parts[4],
             newValue : localStorage[key]
             };
         return x;
@@ -87,7 +91,7 @@ class SheetCache {
         newValue: string) {
 
         // Save to LocalStorage. When successfully uploaded to server, remove. 
-        var key = SheetCache.toKey(recId, columnName);
+        var key = this.toKey(recId, columnName);
 
         // If already exists, don't bump up count. 
         // Overwrite the value so we only send up the latest result. 
@@ -166,7 +170,7 @@ class SheetCache {
         var l: IKeyValue[] = [];
 
         for (var i = 0; i < localStorage.length; i++) {
-            var x = SheetCache.fromLocalStorageKey(i);
+            var x = this.fromLocalStorageKey(i);
             if (x != null) {
                 l.push(x);
             }
