@@ -8,15 +8,17 @@
 declare var google : any;
 declare var moment: any;
 
+
 var _sheetCache: SheetCache;
 var noshowColumns = ["Lat","Long", "RecId", "City","Zip","PrecinctName"];
 var fixLabelsColumns = {FirstName:"First Name",LastName:"Last Name",ResultOfContact:"Result Of Contact",Birthday:"Age" };
+
 var timer_started=false;
 ////take this out in production
 $('#one').css('display', 'none');
 ////
 $(window).bind('beforeunload', function(){
-    return 'Leaving the application now might resultin loosing unsaved data.';
+    return 'Leaving the application now might result in loosing unsaved data.';
 });
  
 var fixValuesColumns = {Birthday:
@@ -45,7 +47,12 @@ function PluginMain(sheet) {
         }
 
         trcGetSheetContents(sheet, function (data) {
+
+
             $('#map_canvas').gmap();
+
+
+
 
             _sheetCache = new SheetCache(sheet, data);
             mapSheet(info, data);
@@ -55,6 +62,8 @@ function PluginMain(sheet) {
 
 
 function save_entry(prefix, iRow, data : ISheetContents, info : ISheetInfoResult) {
+
+
 
     for (var i = 0; i < info.Columns.length; i++) {
         if (!info.Columns[i].IsReadOnly) {
@@ -162,9 +171,11 @@ function mapSheet(info: ISheetInfoResult, data: ISheetContents) {
 
     populate_local_storage_screen("");
 
+
     var numRows = info.CountRecords;
 
     {
+
         for (var i = 0; i < info.Columns.length; i++) {
             var columnInfo = info.Columns[i];
             if (columnInfo.Name == "Party") {
@@ -185,14 +196,14 @@ function mapSheet(info: ISheetInfoResult, data: ISheetContents) {
     for (var iRow = 0; iRow < numRows; iRow++) {
         var party = data["Party"][iRow];
 
-
         var itm: IHousehold = {
             lat: parse2(data["Lat"][iRow]),
             long: parse2(data["Long"][iRow]),
             address: data["Address"][iRow],
             irows: [iRow],
             partyX : getPartyCode(party),
-            altered: _sheetCache.isModifiedByIndex(iRow)
+            altered: !(!data["ResultOfContact"][iRow])
+
         };
         var allready_in_idx = -1;
         var i = 0;
@@ -342,6 +353,7 @@ function mapSheet(info: ISheetInfoResult, data: ISheetContents) {
     });
 
     $.mobile.loading('hide');
+    initGeolocation();
 }
 
 function back_to_list(){
@@ -532,3 +544,45 @@ function _calculateAge(birthday) { // birthday is a date
     return Math.abs(ageDate.getUTCFullYear() - 1970);
 }
 
+
+
+// new ken functions
+
+function initGeolocation() {
+    if (navigator && navigator.geolocation) {
+        var watchId = navigator.geolocation.watchPosition(successCallback,
+            errorCallback,
+            {enableHighAccuracy:true,timeout:60000,maximumAge:60000});
+
+    } else {
+        console.log('Geolocation is not supported');
+    }
+}
+
+function errorCallback() {}
+
+function successCallback(position) {
+    var myLatlng = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
+
+console.log(myLatlng);
+var position_not_found=true;
+    $('#map_canvas').gmap('find', 'markers', { }, function(marker) {
+        if( marker.iRow[0]==-1) {
+            marker.setPosition(myLatlng);
+            position_not_found=false;
+
+        }
+    });
+
+if (position_not_found){
+
+    $('#map_canvas').gmap('addMarker', {'position': myLatlng, 'bounds': false, 'icon':'me.png','iRow':[-1] });
+
+}
+
+
+
+
+
+
+}

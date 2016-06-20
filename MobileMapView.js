@@ -11,7 +11,7 @@ var timer_started = false;
 $('#one').css('display', 'none');
 ////
 $(window).bind('beforeunload', function () {
-    return 'Leaving the application now might resultin loosing unsaved data.';
+    return 'Leaving the application now might result in loosing unsaved data.';
 });
 var fixValuesColumns = { Birthday: function (val) {
         var d = new Date(Date.parse(val));
@@ -149,7 +149,7 @@ function mapSheet(info, data) {
             address: data["Address"][iRow],
             irows: [iRow],
             partyX: getPartyCode(party),
-            altered: _sheetCache.isModifiedByIndex(iRow)
+            altered: !(!data["ResultOfContact"][iRow])
         };
         var allready_in_idx = -1;
         var i = 0;
@@ -261,6 +261,7 @@ function mapSheet(info, data) {
         }
     });
     $.mobile.loading('hide');
+    initGeolocation();
 }
 function back_to_list() {
     $("#the_details").hide();
@@ -392,3 +393,28 @@ function _calculateAge(birthday) {
     var ageDate = new Date(ageDifMs); // miliseconds from epoch
     return Math.abs(ageDate.getUTCFullYear() - 1970);
 }
+// new ken functions
+function initGeolocation() {
+    if (navigator && navigator.geolocation) {
+        var watchId = navigator.geolocation.watchPosition(successCallback, errorCallback, { enableHighAccuracy: true, timeout: 60000, maximumAge: 60000 });
+    }
+    else {
+        console.log('Geolocation is not supported');
+    }
+}
+function errorCallback() { }
+function successCallback(position) {
+    var myLatlng = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
+    console.log(myLatlng);
+    var position_not_found = true;
+    $('#map_canvas').gmap('find', 'markers', {}, function (marker) {
+        if (marker.iRow[0] == -1) {
+            marker.setPosition(myLatlng);
+            position_not_found = false;
+        }
+    });
+    if (position_not_found) {
+        $('#map_canvas').gmap('addMarker', { 'position': myLatlng, 'bounds': false, 'icon': 'me.png', 'iRow': [-1] });
+    }
+}
+//# sourceMappingURL=MobileMapView.js.map
