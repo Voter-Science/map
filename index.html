@@ -21,6 +21,8 @@
                 <li><a href="#sheet_info" data-transition="none" >Info</a></li>
                 <li><a href="#local_storage_sheet" data-transition="none" >Local Storage</a></li>
 
+
+
             </ul>
         </div>
     </div>
@@ -41,6 +43,9 @@
     <div id="the_list">
         <ul data-role="listview" data-inset="true" data-filter="true" data-filter-placeholder="Search person..."  data-divider-theme="a" name="set" id="set">
         </ul>
+<div id="household_fields" data-role="fieldcontain">
+
+</div>
         <a href="#"  data-rel="back"  class="ui-btn ui-shadow ui-corner-all ui-btn-inline ui-icon-back ui-btn-icon-left">Back to map</a>
 
     </div>
@@ -70,6 +75,15 @@
 <div data-role="page" id="local_storage_sheet" data-title="Search"
      data-position-to="window" data-transition="pop"
      data-overlay-theme="a">
+
+        <div data-role="fieldcontain">
+            <label for="flip-location">Tracking:</label>
+            <select name="flip-location" id="flip-location" data-role="slider" data-mini="true">
+                <option value="off">Off</option>
+                <option value="on" selected="selected">On</option>
+
+            </select>
+        </div>
 
     <div id="local_storage_sheet_form" data-role="fieldcontain">
     </div>

@@ -6,6 +6,7 @@
 var _sheetCache;
 var noshowColumns = ["Lat", "Long", "RecId", "City", "Zip", "PrecinctName"];
 var fixLabelsColumns = { FirstName: "First Name", LastName: "Last Name", ResultOfContact: "Result Of Contact", Birthday: "Age" };
+var watchId;
 var timer_started = false;
 ////take this out in production
 $('#one').css('display', 'none');
@@ -40,6 +41,7 @@ function PluginMain(sheet) {
     });
 }
 function save_entry(prefix, iRow, data, info) {
+    var change_was_made = false;
     for (var i = 0; i < info.Columns.length; i++) {
         if (!info.Columns[i].IsReadOnly) {
             var columnName = info.Columns[i].Name;
@@ -56,15 +58,20 @@ function save_entry(prefix, iRow, data, info) {
                 }
                 if (_newvalue != undefined) {
                     _sheetCache.updateValueByIndex(iRow, columnName, _newvalue);
+                    if (data[columnName][iRow] != _newvalue) {
+                        change_was_made = true;
+                    }
                 }
             }
         }
     }
-    $('#map_canvas').gmap('find', 'markers', {}, function (marker) {
-        if ($.inArray(parseInt(iRow), marker.iRow) > -1) {
-            marker.setIcon('marker_grey.png');
-        }
-    });
+    if (change_was_made) {
+        $('#map_canvas').gmap('find', 'markers', {}, function (marker) {
+            if ($.inArray(parseInt(iRow), marker.iRow) > -1) {
+                marker.setIcon('marker_grey.png');
+            }
+        });
+    }
     back_to_list();
 }
 function parse2(x) {
@@ -223,10 +230,27 @@ function mapSheet(info, data) {
                         last_address = data["Address"][entry];
                         content += ' <li data-role="list-divider">Address: ' + last_address + '</li>';
                     }
+                    var _imgPartyMap = {
+                        '0': "PartyLabel-0.png",
+                        '1': "GopLogo.png",
+                        '2': "GopLogoSoft.png",
+                        '3': "PartyLabel-3.png",
+                        '4': "DemLogoSoft.png",
+                        '5': "DemLogo.png"
+                    };
                     var d = new Date(Date.parse(data["Birthday"][entry]));
-                    content += '<li id="' + entry + '"><a href="#">' + data["FirstName"][entry] + " " + data["LastName"][entry] + ', ' + _calculateAge(d) + data["Gender"][entry] + '</a></li>';
+                    content += '<li id="' + entry + '"><a href="#">' + data["FirstName"][entry] + " " + data["LastName"][entry] + ', ' + _calculateAge(d) + data["Gender"][entry] + '' +
+                        '<img src="' + (!(!data["ResultOfContact"][entry]) ? 'marker_grey.png' : _imgPartyMap[data["Party"][entry]]) + '"></a>' +
+                        '</li>';
                     $("#set").append(content);
                     nextId++;
+                });
+                $('#household_fields').html();
+                $.each(info.Columns, function (key, ivalue) {
+                    if (ivalue.Name == "ResultOfContact") {
+                        $('#household_fields').append(create_field("household_", ivalue.Name, ivalue.DisplayName, "", ivalue.IsReadOnly, ivalue.Type, ivalue.PossibleValues));
+                        initialize_field("household_", ivalue.Name, ivalue.Type, ivalue.PossibleValues);
+                    }
                 });
                 $('#set').listview();
                 if (nextId < 10) {
@@ -244,8 +268,8 @@ function mapSheet(info, data) {
                         $("#the_details").show();
                         $("#the_details_form").html("");
                         $("#details_save_button").unbind();
+                        $('#details_save_button').addClass('ui-disabled');
                         $("#details_save_button").click(function () {
-                            console.log("ID before save" + id);
                             save_entry("details_", id, data, info);
                         });
                         $.each(info.Columns, function (key, ivalue) {
@@ -305,13 +329,22 @@ function initialize_field(prefix, name, type, PossibleValues) {
     }
     else if (name == 'Party' || name == 'Supporter') {
         $("#" + prefix + name).controlgroup();
+        $("#" + prefix + name).change(function () {
+            $('#details_save_button').removeClass('ui-disabled');
+        });
     }
     else if (type == 'Text') {
         if (PossibleValues == null) {
             $("#" + prefix + name).textinput();
+            $("#" + prefix + name).change(function () {
+                $('#details_save_button').removeClass('ui-disabled');
+            });
         }
         else {
             $("#" + prefix + name).selectmenu();
+            $("#" + prefix + name).change(function () {
+                $('#details_save_button').removeClass('ui-disabled');
+            });
         }
     }
 }
@@ -394,9 +427,24 @@ function _calculateAge(birthday) {
     return Math.abs(ageDate.getUTCFullYear() - 1970);
 }
 // new ken functions
+$('#flip-location').click(function () {
+    var curVal = $("#flip-location").val();
+    if (curVal == "on") {
+        initGeolocation();
+    }
+    else {
+    }
+});
+function disableGeolocation() {
+    if (navigator && navigator.geolocation) {
+        if (watchId != null) {
+            navigator.geolocation.clearWatch(watchId);
+        }
+    }
+}
 function initGeolocation() {
     if (navigator && navigator.geolocation) {
-        var watchId = navigator.geolocation.watchPosition(successCallback, errorCallback, { enableHighAccuracy: true, timeout: 60000, maximumAge: 60000 });
+        watchId = navigator.geolocation.watchPosition(successCallback, errorCallback, { enableHighAccuracy: true, timeout: 60000, maximumAge: 60000 });
     }
     else {
         console.log('Geolocation is not supported');
