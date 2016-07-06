@@ -245,7 +245,7 @@ function mapSheet(info, data) {
                     $("#set").append(content);
                     nextId++;
                 });
-                $('#household_fields').html();
+                $('#household_fields').html('');
                 $.each(info.Columns, function (key, ivalue) {
                     if (ivalue.Name == "ResultOfContact") {
                         $('#household_fields').append(create_field("household_", ivalue.Name, ivalue.DisplayName, "", ivalue.IsReadOnly, ivalue.Type, ivalue.PossibleValues));

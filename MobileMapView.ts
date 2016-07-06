@@ -330,7 +330,7 @@ function mapSheet(info: ISheetInfoResult, data: ISheetContents) {
                 });
 
 
-                $('#household_fields').html();
+                $('#household_fields').html('');
 
                 $.each(info.Columns, function (key, ivalue) {
                     if (ivalue.Name=="ResultOfContact"){
