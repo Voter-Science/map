@@ -232,7 +232,7 @@ function mapSheet(info, data) {
                     }
                     var d = new Date(Date.parse(data["Birthday"][entry]));
                     content += '<li id="' + entry + '"><a href="#">' + data["FirstName"][entry] + " " + data["LastName"][entry] + ', ' + _calculateAge(d) + data["Gender"][entry] + '' +
-                        '<img src="' + (!(!data["ResultOfContact"][entry]) ? 'marker_grey.png' : _imgPartyMap[data["Party"][entry]]) + '"></a>' +
+                        '<img src="' + (!(!data["ResultOfContact"][entry]) ? 'marker_grey.png' : getImgParty(data, entry)) + '"></a>' +
                         '</li>';
                     $("#set").append(content);
                     nextId++;
@@ -349,6 +349,14 @@ var _imgPartyMap = {
     '4': "DemLogoSoft.png",
     '5': "DemLogo.png"
 };
+function getImgParty(data, rowIndex) {
+    var partyId = data["Party"][rowIndex];
+    var num = parseInt(partyId);
+    if (isNaN(num)) {
+        num = 0;
+    }
+    return _imgPartyMap[num];
+}
 function create_field(prefix, name, label, value, readonly, type, PossibleValues) {
     if (fixValuesColumns[label] != null) {
         value = fixValuesColumns[label](value);

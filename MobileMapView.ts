@@ -310,7 +310,7 @@ function mapSheet(info: ISheetInfoResult, data: ISheetContents) {
 
                     var d = new Date(Date.parse(data["Birthday"][entry]));
                     content += '<li id="' + entry + '"><a href="#">' + data["FirstName"][entry] + " " + data["LastName"][entry] + ', ' + _calculateAge(d) + data["Gender"][entry] + '' +
-                        '<img src="'+(!(!data["ResultOfContact"][entry]) ? 'marker_grey.png' : _imgPartyMap[data["Party"][entry]])+'"></a>' +
+                        '<img src="'+(!(!data["ResultOfContact"][entry]) ? 'marker_grey.png' : getImgParty(data, entry))+'"></a>' +
                         '</li>';
 
 
@@ -471,7 +471,7 @@ function initialize_field(prefix,name,type,PossibleValues){
         }
     }
 }
-
+ 
 // Logos for standard party Id. 
 var _imgPartyMap =
     {
@@ -482,6 +482,16 @@ var _imgPartyMap =
         '4': "DemLogoSoft.png",
         '5': "DemLogo.png"
     };
+
+function getImgParty(data: any, rowIndex: number) {
+    var partyId = data["Party"][rowIndex];
+    var num = parseInt(partyId);
+    if (isNaN(num)) {
+        num = 0;
+    }
+    return _imgPartyMap[num];
+}
+
 
 function create_field(
     prefix : string,
