@@ -61,33 +61,31 @@ function PluginMain(sheet) {
 }
 
 
-function save_entry(prefix, iRow, data : ISheetContents, info : ISheetInfoResult) {
+function save_entry(prefix, iRow, data: ISheetContents, info: ISheetInfoResult) {
 
-
-var change_was_made=false;
+    var change_was_made = false;
     for (var i = 0; i < info.Columns.length; i++) {
         if (!info.Columns[i].IsReadOnly) {
             var columnName = info.Columns[i].Name;
-            if ($.inArray(columnName, noshowColumns)==-1) {
+            if ($.inArray(columnName, noshowColumns) == -1) {
                 var _newvalue = $("#" + prefix + columnName).val();
-                if (columnName=='Party'){
+                if (columnName == 'Party') {
 
-                    _newvalue=$("#details_Party :radio:checked").data('selected_value');
+                    _newvalue = $("#details_Party :radio:checked").data('selected_value');
 
-                } else if (columnName=='Supporter'){
+                } else if (columnName == 'Supporter') {
 
-                    _newvalue=$("#details_Supporter :radio:checked").data('selected_value');
-                } else if (columnName=='ResultOfContact'
-                ){
-                    _newvalue=$("#details_ResultOfContact").val();
+                    _newvalue = $("#details_Supporter :radio:checked").data('selected_value');
+                } else if (columnName == 'ResultOfContact') {
+                    _newvalue = $("#details_ResultOfContact").val();
                 }
-                
+
                 if (_newvalue != undefined) {
                     _sheetCache.updateValueByIndex(iRow, columnName, _newvalue);
 
 
-                    if (data[columnName][iRow]!=_newvalue) {
-                        change_was_made=true;
+                    if (data[columnName][iRow] != _newvalue) {
+                        change_was_made = true;
                     }
                 }
             }
@@ -96,7 +94,7 @@ var change_was_made=false;
 
 
 
-    if (change_was_made){
+    if (change_was_made) {
 
 
         $('#map_canvas').gmap('find', 'markers', {}, function (marker) {
@@ -303,21 +301,12 @@ function mapSheet(info: ISheetInfoResult, data: ISheetContents) {
 
                 var x2: any = entry; // TODO ?x2
                 var last_address = data["Address"][x2];
-                this.iRow.forEach(function (entry) {
+                this.iRow.forEach(function (entry : number) {
                     var content = '';
                     if (last_address != data["Address"][entry]) {
                         last_address = data["Address"][entry];
                         content += ' <li data-role="list-divider">Address: ' + last_address + '</li>';
                     }
-                    var _imgPartyMap =
-                    {
-                        '0': "PartyLabel-0.png",
-                        '1': "GopLogo.png",
-                        '2': "GopLogoSoft.png",
-                        '3': "PartyLabel-3.png",
-                        '4': "DemLogoSoft.png",
-                        '5': "DemLogo.png"
-                    };
 
                     var d = new Date(Date.parse(data["Birthday"][entry]));
                     content += '<li id="' + entry + '"><a href="#">' + data["FirstName"][entry] + " " + data["LastName"][entry] + ', ' + _calculateAge(d) + data["Gender"][entry] + '' +
@@ -333,13 +322,11 @@ function mapSheet(info: ISheetInfoResult, data: ISheetContents) {
                 $('#household_fields').html('');
 
                 $.each(info.Columns, function (key, ivalue) {
-                    if (ivalue.Name=="ResultOfContact"){
-
-                    $('#household_fields').append(create_field("household_", ivalue.Name, ivalue.DisplayName, "", ivalue.IsReadOnly, ivalue.Type, ivalue.PossibleValues));
-                    initialize_field("household_", ivalue.Name, ivalue.Type, ivalue.PossibleValues);
-
+                    if (ivalue.Name == "ResultOfContact") {
+                        $('#household_fields').append(create_field("household_", ivalue.Name, ivalue.DisplayName, "", ivalue.IsReadOnly, ivalue.Type, ivalue.PossibleValues));
+                        initialize_field("household_", ivalue.Name, ivalue.Type, ivalue.PossibleValues);
                     }
-                    });
+                });
 
                 $('#set').listview();
                 if (nextId < 10) {
@@ -596,26 +583,25 @@ function _calculateAge(birthday) { // birthday is a date
 
 
 
-// new ken functions
+// Geolocation functions 
 $('#flip-location').click(function () {
     var curVal = $("#flip-location").val();
 if (curVal== "on"){
     initGeolocation();
 
-}else{
-
-
+} else {
 }
 });
-function  disableGeolocation(){
+
+function disableGeolocation() {
     if (navigator && navigator.geolocation) {
-if (watchId!=null){
-    navigator.geolocation.clearWatch(watchId);
+        if (watchId != null) {
+            navigator.geolocation.clearWatch(watchId);
 
-}
+        }
     }
-
 }
+
 function initGeolocation() {
     if (navigator && navigator.geolocation) {
          watchId = navigator.geolocation.watchPosition(successCallback,
@@ -632,25 +618,19 @@ function errorCallback() {}
 function successCallback(position) {
     var myLatlng = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
 
-console.log(myLatlng);
-var position_not_found=true;
-    $('#map_canvas').gmap('find', 'markers', { }, function(marker) {
-        if( marker.iRow[0]==-1) {
+    console.log(myLatlng);
+    var position_not_found = true;
+    $('#map_canvas').gmap('find', 'markers', {}, function (marker) {
+        if (marker.iRow[0] == -1) {
             marker.setPosition(myLatlng);
-            position_not_found=false;
+            position_not_found = false;
 
         }
     });
 
-if (position_not_found){
+    if (position_not_found) {
 
-    $('#map_canvas').gmap('addMarker', {'position': myLatlng, 'bounds': false, 'icon':'me.png','iRow':[-1] });
+        $('#map_canvas').gmap('addMarker', { 'position': myLatlng, 'bounds': false, 'icon': 'me.png', 'iRow': [-1] });
 
-}
-
-
-
-
-
-
+    }
 }

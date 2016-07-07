@@ -230,14 +230,6 @@ function mapSheet(info, data) {
                         last_address = data["Address"][entry];
                         content += ' <li data-role="list-divider">Address: ' + last_address + '</li>';
                     }
-                    var _imgPartyMap = {
-                        '0': "PartyLabel-0.png",
-                        '1': "GopLogo.png",
-                        '2': "GopLogoSoft.png",
-                        '3': "PartyLabel-3.png",
-                        '4': "DemLogoSoft.png",
-                        '5': "DemLogo.png"
-                    };
                     var d = new Date(Date.parse(data["Birthday"][entry]));
                     content += '<li id="' + entry + '"><a href="#">' + data["FirstName"][entry] + " " + data["LastName"][entry] + ', ' + _calculateAge(d) + data["Gender"][entry] + '' +
                         '<img src="' + (!(!data["ResultOfContact"][entry]) ? 'marker_grey.png' : _imgPartyMap[data["Party"][entry]]) + '"></a>' +
@@ -426,7 +418,7 @@ function _calculateAge(birthday) {
     var ageDate = new Date(ageDifMs); // miliseconds from epoch
     return Math.abs(ageDate.getUTCFullYear() - 1970);
 }
-// new ken functions
+// Geolocation functions 
 $('#flip-location').click(function () {
     var curVal = $("#flip-location").val();
     if (curVal == "on") {
@@ -465,4 +457,3 @@ function successCallback(position) {
         $('#map_canvas').gmap('addMarker', { 'position': myLatlng, 'bounds': false, 'icon': 'me.png', 'iRow': [-1] });
     }
 }
-//# sourceMappingURL=MobileMapView.js.map

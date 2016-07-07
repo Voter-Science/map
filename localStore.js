@@ -145,7 +145,7 @@ var SheetCache = (function () {
         });
     };
     return SheetCache;
-})();
+}());
 // Update a single cell in the sheet. 
 function trcPostSheetUpdateCell2(sheetRef, recId, colName, newValue, successFunc, failureFunc) {
     // We can post either application/json or text/csv
@@ -169,4 +169,3 @@ function trcPostSheetUpdateCell2(sheetRef, recId, colName, newValue, successFunc
         }
     });
 }
-//# sourceMappingURL=localStore.js.map
