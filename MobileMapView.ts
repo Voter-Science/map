@@ -16,10 +16,7 @@ var watchId;
 var timer_started=false;
 ////take this out in production
 $('#one').css('display', 'none');
-////
-$(window).bind('beforeunload', function(){
-    return 'Leaving the application now might result in loosing unsaved data.';
-});
+
  
 var fixValuesColumns = {Birthday:
     function(val){
@@ -47,12 +44,16 @@ function PluginMain(sheet) {
         }
 
         trcGetSheetContents(sheet, function (data) {
-
-
             $('#map_canvas').gmap();
 
-
-
+            $(window).bind('beforeunload', function () {
+                var count = _sheetCache.getTotalNotYetUploaded();
+                if (count > 0) {
+                    return "You have " + count + " local changes. If you exit now, please return to this map page when your device is back online to upload them.";
+                } else {
+                    return "Are you sure you want to exit the map page?";
+                }
+            });
 
             _sheetCache = new SheetCache(sheet, data);
             mapSheet(info, data);
