@@ -61,6 +61,16 @@ function PluginMain(sheet) {
 }
 
 
+// True if the row has been altered
+function is_altered(data: ISheetContents, iRow: number): boolean {
+    // Not all sheets will have a ResultOfContact column. 
+    var values = data["ResultOfContact"];
+    if (values == undefined) {
+        return false;
+    }
+    return !(!values[iRow]);
+}
+
 function save_entry(prefix, iRow, data: ISheetContents, info: ISheetInfoResult) {
 
     var change_was_made = false;
@@ -81,22 +91,18 @@ function save_entry(prefix, iRow, data: ISheetContents, info: ISheetInfoResult) 
                 }
 
                 if (_newvalue != undefined) {
-                    _sheetCache.updateValueByIndex(iRow, columnName, _newvalue);
-
-
-                    if (data[columnName][iRow] != _newvalue) {
+                    var oldValue = data[columnName][iRow];
+                    if (oldValue != _newvalue) {
                         change_was_made = true;
                     }
+                    // updates data[], even if we're offline.
+                    _sheetCache.updateValueByIndex(iRow, columnName, _newvalue); 
                 }
             }
         }
     }
 
-
-
     if (change_was_made) {
-
-
         $('#map_canvas').gmap('find', 'markers', {}, function (marker) {
             if ($.inArray(parseInt(iRow), marker.iRow) > -1) {
                 marker.setIcon('marker_grey.png');
@@ -210,7 +216,7 @@ function mapSheet(info: ISheetInfoResult, data: ISheetContents) {
             address: data["Address"][iRow],
             irows: [iRow],
             partyX : getPartyCode(party),
-            altered: !(!data["ResultOfContact"][iRow])
+            altered:  is_altered(data, iRow)
 
         };
         var allready_in_idx = -1;
@@ -310,7 +316,7 @@ function mapSheet(info: ISheetInfoResult, data: ISheetContents) {
 
                     var d = new Date(Date.parse(data["Birthday"][entry]));
                     content += '<li id="' + entry + '"><a href="#">' + data["FirstName"][entry] + " " + data["LastName"][entry] + ', ' + _calculateAge(d) + data["Gender"][entry] + '' +
-                        '<img src="'+(!(!data["ResultOfContact"][entry]) ? 'marker_grey.png' : getImgParty(data, entry))+'"></a>' +
+                        '<img src="' + (is_altered(data, entry) ? 'marker_grey.png' : getImgParty(data, entry))+'"></a>' +
                         '</li>';
 
 
