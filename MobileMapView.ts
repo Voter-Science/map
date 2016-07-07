@@ -325,15 +325,16 @@ function mapSheet(info: ISheetInfoResult, data: ISheetContents) {
                     nextId++;
                 });
 
-
+                
                 $('#household_fields').html('');
 
+                /* Doesn't work yet. Disable until it works. 
                 $.each(info.Columns, function (key, ivalue) {
                     if (ivalue.Name == "ResultOfContact") {
                         $('#household_fields').append(create_field("household_", ivalue.Name, ivalue.DisplayName, "", ivalue.IsReadOnly, ivalue.Type, ivalue.PossibleValues));
                         initialize_field("household_", ivalue.Name, ivalue.Type, ivalue.PossibleValues);
                     }
-                });
+                });*/
 
                 $('#set').listview();
                 if (nextId < 10) {
