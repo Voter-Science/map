@@ -72,8 +72,33 @@ function is_altered(data: ISheetContents, iRow: number): boolean {
     return !(!values[iRow]);
 }
 
-function save_entry(prefix, iRow, data: ISheetContents, info: ISheetInfoResult) {
+// Set the marker containing the voter to grey.  
+function set_marker_grey(iRow: number): void {
+    $('#map_canvas').gmap('find', 'markers', {}, function (marker) {
+        if ($.inArray(iRow, marker.iRow) > -1) {
+            marker.setIcon('marker_grey.png');
+        }
+    });   
+}
 
+// Called when setting a house-hold wide option, set on all people in the household. 
+function save_entry2(
+    prefix: string,
+    iRow: number,
+    columnName: string,
+    newValue: string) : void
+{
+    _sheetCache.updateValueByIndex(iRow, columnName, newValue); 
+    set_marker_grey(iRow);  
+}
+
+// called on the single-person page, pull answer from question. 
+function save_entry(
+    prefix: string,
+    iRow: number,
+    data: ISheetContents,
+    info: ISheetInfoResult) :void
+{
     var change_was_made = false;
     for (var i = 0; i < info.Columns.length; i++) {
         if (!info.Columns[i].IsReadOnly) {
@@ -104,11 +129,7 @@ function save_entry(prefix, iRow, data: ISheetContents, info: ISheetInfoResult) 
     }
 
     if (change_was_made) {
-        $('#map_canvas').gmap('find', 'markers', {}, function (marker) {
-            if ($.inArray(parseInt(iRow), marker.iRow) > -1) {
-                marker.setIcon('marker_grey.png');
-            }
-        });
+        set_marker_grey(iRow);
     }
     back_to_list();
 }
@@ -305,7 +326,7 @@ function mapSheet(info: ISheetInfoResult, data: ISheetContents) {
                 $.mobile.navigate("#p");
                 $("#set").html('');
 
-
+                var thisHousehold = entry;
                 var x2: any = entry; // TODO ?x2
                 var last_address = data["Address"][x2];
                 this.iRow.forEach(function (entry : number) {
@@ -328,13 +349,30 @@ function mapSheet(info: ISheetInfoResult, data: ISheetContents) {
                 
                 $('#household_fields').html('');
 
-                /* Doesn't work yet. Disable until it works. 
+                // Display househould wide quick shortcuts. 
                 $.each(info.Columns, function (key, ivalue) {
                     if (ivalue.Name == "ResultOfContact") {
-                        $('#household_fields').append(create_field("household_", ivalue.Name, ivalue.DisplayName, "", ivalue.IsReadOnly, ivalue.Type, ivalue.PossibleValues));
+                        var columnName = ivalue.Name;
+                        var html = create_field("household_", columnName, ivalue.DisplayName, "", ivalue.IsReadOnly, ivalue.Type, ivalue.PossibleValues);                        
+                        $('#household_fields').append("<div><b>Househould wide option:</b></div>").append(html);
+                        var htmlId = "#household_" + columnName;                        
+                        $(htmlId).change(function () { 
+                            var newValue = this.value; 
+
+                            // When changing household, apply choice to all voters, and then directly return to map 
+                            for (var i in thisHousehold.irows)
+                            {
+                                var rowIdx = thisHousehold.irows[i];
+                                //alert('value is changed2:' + newValue  +'for row ' + rowIdx);
+                                save_entry2("details_", rowIdx, columnName, newValue);
+                            }
+
+                            $.mobile.back(); // Back to map page. 
+                        })
                         initialize_field("household_", ivalue.Name, ivalue.Type, ivalue.PossibleValues);
+                        
                     }
-                });*/
+                });
 
                 $('#set').listview();
                 if (nextId < 10) {
@@ -361,7 +399,8 @@ function mapSheet(info: ISheetInfoResult, data: ISheetContents) {
 
                             $("#details_save_button").click(function () {
 
-                                save_entry("details_", id, data, info);
+                                var iRow = parseInt(id);
+                                save_entry("details_", iRow, data, info);
                             });
                             
                             $.each(info.Columns, function (key, ivalue) {
@@ -501,6 +540,7 @@ function getImgParty(data: any, rowIndex: number) {
 }
 
 
+// Returns the HTML to create the field
 function create_field(
     prefix : string,
     name : string,
@@ -508,7 +548,7 @@ function create_field(
     value : any,
     readonly : boolean,
     type,
-    PossibleValues: string[]) {
+    PossibleValues: string[]) : string {
 
     if(fixValuesColumns[label]!=null){
         value=fixValuesColumns[label](value);

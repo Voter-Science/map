@@ -54,6 +54,20 @@ function is_altered(data, iRow) {
     }
     return !(!values[iRow]);
 }
+// Set the marker containing the voter to grey.  
+function set_marker_grey(iRow) {
+    $('#map_canvas').gmap('find', 'markers', {}, function (marker) {
+        if ($.inArray(iRow, marker.iRow) > -1) {
+            marker.setIcon('marker_grey.png');
+        }
+    });
+}
+// Called when setting a house-hold wide option, set on all people in the household. 
+function save_entry2(prefix, iRow, columnName, newValue) {
+    _sheetCache.updateValueByIndex(iRow, columnName, newValue);
+    set_marker_grey(iRow);
+}
+// called on the single-person page, pull answer from question. 
 function save_entry(prefix, iRow, data, info) {
     var change_was_made = false;
     for (var i = 0; i < info.Columns.length; i++) {
@@ -82,11 +96,7 @@ function save_entry(prefix, iRow, data, info) {
         }
     }
     if (change_was_made) {
-        $('#map_canvas').gmap('find', 'markers', {}, function (marker) {
-            if ($.inArray(parseInt(iRow), marker.iRow) > -1) {
-                marker.setIcon('marker_grey.png');
-            }
-        });
+        set_marker_grey(iRow);
     }
     back_to_list();
 }
@@ -238,6 +248,7 @@ function mapSheet(info, data) {
                 $.mobile.loading('show');
                 $.mobile.navigate("#p");
                 $("#set").html('');
+                var thisHousehold = entry;
                 var x2 = entry; // TODO ?x2
                 var last_address = data["Address"][x2];
                 this.iRow.forEach(function (entry) {
@@ -254,13 +265,26 @@ function mapSheet(info, data) {
                     nextId++;
                 });
                 $('#household_fields').html('');
-                /* Doesn't work yet. Disable until it works.
+                // Display househould wide quick shortcuts. 
                 $.each(info.Columns, function (key, ivalue) {
                     if (ivalue.Name == "ResultOfContact") {
-                        $('#household_fields').append(create_field("household_", ivalue.Name, ivalue.DisplayName, "", ivalue.IsReadOnly, ivalue.Type, ivalue.PossibleValues));
+                        var columnName = ivalue.Name;
+                        var html = create_field("household_", columnName, ivalue.DisplayName, "", ivalue.IsReadOnly, ivalue.Type, ivalue.PossibleValues);
+                        $('#household_fields').append("<div><b>Househould wide option:</b></div>").append(html);
+                        var htmlId = "#household_" + columnName;
+                        $(htmlId).change(function () {
+                            var newValue = this.value;
+                            // When changing household, apply choice to all voters, and then directly return to map 
+                            for (var i in thisHousehold.irows) {
+                                var rowIdx = thisHousehold.irows[i];
+                                //alert('value is changed2:' + newValue  +'for row ' + rowIdx);
+                                save_entry2("details_", rowIdx, columnName, newValue);
+                            }
+                            $.mobile.back(); // Back to map page. 
+                        });
                         initialize_field("household_", ivalue.Name, ivalue.Type, ivalue.PossibleValues);
                     }
-                });*/
+                });
                 $('#set').listview();
                 if (nextId < 10) {
                     $("#set").prev("form.ui-filterable").hide();
@@ -279,7 +303,8 @@ function mapSheet(info, data) {
                         $("#details_save_button").unbind();
                         $('#details_save_button').addClass('ui-disabled');
                         $("#details_save_button").click(function () {
-                            save_entry("details_", id, data, info);
+                            var iRow = parseInt(id);
+                            save_entry("details_", iRow, data, info);
                         });
                         $.each(info.Columns, function (key, ivalue) {
                             $("#the_details_form").append(create_field("details_", ivalue.Name, ivalue.DisplayName, data[ivalue.Name][id], ivalue.IsReadOnly, ivalue.Type, ivalue.PossibleValues));
@@ -374,6 +399,7 @@ function getImgParty(data, rowIndex) {
     }
     return _imgPartyMap[num];
 }
+// Returns the HTML to create the field
 function create_field(prefix, name, label, value, readonly, type, PossibleValues) {
     if (fixValuesColumns[label] != null) {
         value = fixValuesColumns[label](value);
