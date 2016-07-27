@@ -64,12 +64,19 @@ function PluginMain(sheet) {
 
 // True if the row has been altered
 function is_altered(data: ISheetContents, iRow: number): boolean {
+    // Switch to using a "Last modified" time stamp
     // Not all sheets will have a ResultOfContact column. 
     var values = data["ResultOfContact"];
-    if (values == undefined) {
-        return false;
+    if (values != undefined) {
+        return !(!values[iRow]);    
     }
-    return !(!values[iRow]);
+
+    values = data["Last_Canvass_Results__c"];
+    if (values != undefined) {
+        return !(!values[iRow]);    
+    }
+    
+    return false;
 }
 
 // Set the marker containing the voter to grey.  
@@ -500,22 +507,25 @@ function initialize_field(prefix,name,type,PossibleValues){
         })
 
     }else if (type=='Text') {
+        // Changed is not fired until after the control loses focus.
         if(PossibleValues==null) {
             $("#"+prefix+name).textinput();
-
             $("#"+prefix+name).change(function(){
-
                 $('#details_save_button').removeClass('ui-disabled');
             })
         }else{
 
             $("#"+prefix+name).selectmenu();
-
             $("#"+prefix+name).change(function(){
 
                 $('#details_save_button').removeClass('ui-disabled');
             })
         }
+    } else if (type == 'MultipleChoice')
+    {
+            $("#"+prefix+name).change(function(){
+                $('#details_save_button').removeClass('ui-disabled');
+            })
     }
 }
  
