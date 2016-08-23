@@ -39,6 +39,7 @@ function PluginMain(sheet) {
     });
 
     trcGetSheetInfo(sheet, function (info) {
+        find_altered_columns(info);
         if (info.CountRecords > 1000) {
             alert("Sheet has too many voters. Select a precinct or use geofencing to break into a smaller region. ");
         }
@@ -61,20 +62,45 @@ function PluginMain(sheet) {
     });
 }
 
+// List of columns that if set, mean the door is already visited 
+// (so  the  pin should display as hollow.) 
+var _alteredNames : string[] = [];
 
+function find_altered_columns(info: ISheetInfoResult) : void {
+    for(var i = 0; i < info.Columns.length; i++)
+    {
+        var q = info.Columns[i];
+        if (!q.IsReadOnly)
+        {
+            var qn =q.Name.toLowerCase(); 
+            // Ignore editable columns that we provided.
+            if ((qn != "party") &&
+                (qn != "cellphone") &&
+                (qn != "email")) 
+            {
+                _alteredNames.push(q.Name);
+            }
+        }        
+    }
+}
+
+
+// $$$ NationBuilder questions are of the form 'Q12' where 12 is the question id. 
 // True if the row has been altered
 function is_altered(data: ISheetContents, iRow: number): boolean {
     // Switch to using a "Last modified" time stamp
-    // Not all sheets will have a ResultOfContact column. 
-    var values = data["ResultOfContact"];
-    if (values != undefined) {
-        return !(!values[iRow]);    
-    }
+    // Not all sheets will have a ResultOfContact column.
+    for(var i = 0; i < _alteredNames.length; i++) {
+        var columnName = _alteredNames[i];
+        var values = data[columnName];
 
-    values = data["Last_Canvass_Results__c"];
-    if (values != undefined) {
-        return !(!values[iRow]);    
-    }
+        if (values != undefined) {
+            var  altered : boolean = !(!values[iRow]);
+            if (altered) {
+                return true;
+            }    
+        } 
+    }  
     
     return false;
 }
