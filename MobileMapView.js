@@ -10,7 +10,11 @@ var watchId;
 var timer_started = false;
 ////take this out in production
 $('#one').css('display', 'none');
-var fixValuesColumns = { Birthday: function (val) {
+// Which pins to use
+// Lazy init based on schema
+var _colorFactor = null;
+var fixValuesColumns = {
+    Birthday: function (val) {
         var d = new Date(Date.parse(val));
         return _calculateAge(d);
     }
@@ -84,7 +88,7 @@ function is_altered(data, iRow) {
 function set_marker_grey(iRow) {
     $('#map_canvas').gmap('find', 'markers', {}, function (marker) {
         if ($.inArray(iRow, marker.iRow) > -1) {
-            marker.setIcon('marker_grey.png');
+            marker.setIcon(MarkerColors.Grey);
         }
     });
 }
@@ -132,6 +136,34 @@ function parse2(x) {
     }
     return parseFloat(x);
 }
+// Correspond to images in the folder. 
+var MarkerColors = (function () {
+    function MarkerColors() {
+    }
+    MarkerColors.Grey = 'marker_grey.png'; // Hollow 
+    MarkerColors.Unknown = "marker_Unknown.png"; // dark purple 
+    MarkerColors.Blue = "marker_Blue.png";
+    MarkerColors.Red = "marker_Red.png";
+    MarkerColors.Purple = "marker_Purple.png";
+    MarkerColors.Orange = "marker_Orange.png";
+    MarkerColors.Green = "marker_Green.png";
+    MarkerColors.Yellow = "marker_Yellow.png";
+    return MarkerColors;
+}());
+;
+// Worker_Type__c
+function getColor(data, iRow) {
+    if (_colorFactor == null) {
+        if (data["Worker_Type__c"] != undefined) {
+            _colorFactor = new GeneralColorFactory();
+        }
+        else {
+            _colorFactor = new PartyHouseholdColorFactory();
+        }
+    }
+    return _colorFactor.getColor(data, iRow);
+}
+// Color scheme for standard party 
 // Represent combined party code at a household
 var HouseholdPartyCode;
 (function (HouseholdPartyCode) {
@@ -140,44 +172,107 @@ var HouseholdPartyCode;
     HouseholdPartyCode[HouseholdPartyCode["AllDem"] = 2] = "AllDem";
     HouseholdPartyCode[HouseholdPartyCode["Mixed"] = 3] = "Mixed";
 })(HouseholdPartyCode || (HouseholdPartyCode = {}));
-function getPartyImage(x) {
-    if (x == HouseholdPartyCode.AllDem) {
-        return "marker_Blue.png";
+var PartyColor = (function () {
+    function PartyColor(party) {
+        this._party = party;
     }
-    if (x == HouseholdPartyCode.AllGop) {
-        return "marker_Red.png";
+    PartyColor.prototype.merge = function (other) {
+        var a = this;
+        var ax = a._party;
+        var b = other;
+        var bx = other._party;
+        if (ax == HouseholdPartyCode.Unknown) {
+            return b;
+        }
+        if (bx == HouseholdPartyCode.Unknown) {
+            return a;
+        }
+        if (ax == HouseholdPartyCode.Mixed) {
+            return a;
+        }
+        if (bx == HouseholdPartyCode.Mixed) {
+            return b;
+        }
+        if (ax == bx) {
+            return a;
+        }
+        return new PartyColor(HouseholdPartyCode.Mixed);
+    };
+    PartyColor.prototype.getImage = function () {
+        if (this._party == HouseholdPartyCode.AllDem) {
+            return MarkerColors.Blue;
+        }
+        if (this._party == HouseholdPartyCode.AllGop) {
+            return MarkerColors.Red;
+        }
+        if (this._party == HouseholdPartyCode.Mixed) {
+            return MarkerColors.Purple;
+        }
+        if (this._party == HouseholdPartyCode.Unknown) {
+            return MarkerColors.Unknown;
+        }
+    };
+    return PartyColor;
+}());
+var PartyHouseholdColorFactory = (function () {
+    function PartyHouseholdColorFactory() {
     }
-    if (x == HouseholdPartyCode.Mixed) {
-        return "marker_Purple.png";
+    PartyHouseholdColorFactory.prototype.getColor = function (data, iRow) {
+        var party = data["Party"][iRow];
+        if (party == '1' || party == '2') {
+            return new PartyColor(HouseholdPartyCode.AllGop);
+        }
+        if (party == '4' || party == '5') {
+            return new PartyColor(HouseholdPartyCode.AllDem);
+        }
+        return new PartyColor(HouseholdPartyCode.Unknown);
+    };
+    return PartyHouseholdColorFactory;
+}());
+// generic color scheme
+var GeneralColor = (function () {
+    function GeneralColor(marker) {
+        this._marker = marker;
     }
-    if (x == HouseholdPartyCode.Unknown) {
-        return "marker_Unknown.png";
-    }
-}
-function getPartyCode(party) {
-    if (party == '1' || party == '2') {
-        return HouseholdPartyCode.AllGop;
-    }
-    if (party == '4' || party == '5') {
-        return HouseholdPartyCode.AllDem;
-    }
-    return HouseholdPartyCode.Unknown;
-}
-function mergePartyCode(a, b) {
-    if (a == HouseholdPartyCode.Unknown) {
-        return b;
-    }
-    if (b == HouseholdPartyCode.Unknown) {
+    GeneralColor.prototype.merge = function (other) {
+        var a = this;
+        var b = other;
+        if (a._marker != b._marker) {
+            return new GeneralColor(MarkerColors.Unknown);
+        }
         return a;
+    };
+    GeneralColor.prototype.getImage = function () {
+        return this._marker;
+    };
+    return GeneralColor;
+}());
+var GeneralColorFactory = (function () {
+    function GeneralColorFactory() {
     }
-    if (a == HouseholdPartyCode.Mixed || b == HouseholdPartyCode.Mixed) {
-        return HouseholdPartyCode.Mixed;
-    }
-    if (a == b) {
-        return a;
-    }
-    return HouseholdPartyCode.Mixed;
-}
+    GeneralColorFactory.prototype.getColor = function (data, iRow) {
+        /*
+           Healthcare: SEIU: Purple
+           Childcare: SEIU: Yellow
+           Childcare: AFSCME: Green
+           Teachers: OEA: Orange
+        */
+        var worker = data["Worker_Type__c"][iRow];
+        if (worker == "Childcare") {
+            return new GeneralColor(MarkerColors.Green);
+        }
+        else if (worker == "Healthcare") {
+            return new GeneralColor(MarkerColors.Purple);
+        }
+        else if (worker == "Teacher") {
+            return new GeneralColor(MarkerColors.Orange);
+        }
+        else {
+            return new GeneralColor(MarkerColors.Unknown);
+        }
+    };
+    return GeneralColorFactory;
+}());
 function mapSheet(info, data) {
     populate_info_screen(info);
     populate_local_storage_screen("");
@@ -207,7 +302,7 @@ function mapSheet(info, data) {
             long: parse2(data["Long"][iRow]),
             address: data["Address"][iRow],
             irows: [iRow],
-            partyX: getPartyCode(party),
+            partyX: getColor(data, iRow),
             altered: is_altered(data, iRow)
         };
         var allready_in_idx = -1;
@@ -218,7 +313,7 @@ function mapSheet(info, data) {
                 allready_in_idx = i;
                 if (itm.altered) {
                     houseHolds[allready_in_idx].altered = true;
-                    houseHolds[allready_in_idx].partyX = mergePartyCode(houseHolds[allready_in_idx].partyX, itm.partyX);
+                    houseHolds[allready_in_idx].partyX = houseHolds[allready_in_idx].partyX.merge(itm.partyX);
                 }
                 return;
             }
@@ -267,7 +362,7 @@ function mapSheet(info, data) {
             $('#map_canvas').gmap('addMarker', {
                 'position': new google.maps.LatLng(entry.lat, entry.long),
                 'bounds': true,
-                'icon': (entry.altered ? 'marker_grey.png' : getPartyImage(entry.partyX)),
+                'icon': (entry.altered ? MarkerColors.Grey : entry.partyX.getImage()),
                 'iRow': entry.irows
             }).click(function () {
                 var nextId = 1;
@@ -285,7 +380,7 @@ function mapSheet(info, data) {
                     }
                     var d = new Date(Date.parse(data["Birthday"][entry]));
                     content += '<li id="' + entry + '"><a href="#">' + data["FirstName"][entry] + " " + data["LastName"][entry] + ', ' + _calculateAge(d) + data["Gender"][entry] + '' +
-                        '<img src="' + (is_altered(data, entry) ? 'marker_grey.png' : getImgParty(data, entry)) + '"></a>' +
+                        '<img src="' + (is_altered(data, entry) ? MarkerColors.Grey : getImgParty(data, entry)) + '"></a>' +
                         '</li>';
                     $("#set").append(content);
                     nextId++;

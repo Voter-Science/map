@@ -1,0 +1,10 @@
+﻿{
+    // ID must be unique on the gallery
+    "Id": "Map.Beta",
+    "Name": "Map View (Preview)",
+    "Author" :  "Kentastic",
+    "Website" :  "https://github.com/Voter-Science/TRC-API-Samples",
+    "Description": "(preview) A map view for editing. (preview of next version)",        
+    "Version": "1.0.0", // User SemVer
+    "Tags": [ "map" ]
+}
