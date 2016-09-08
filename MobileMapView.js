@@ -3,6 +3,7 @@
 // This calls TRC APIs and binds to specific HTML elements from the page.
 /// <reference path="typings\trc\trc.ts" />
 /// <reference path="localStore.ts" />
+/// <reference path="MapWrapper.ts" />
 var _sheetCache;
 var noshowColumns = ["Lat", "Long", "RecId", "City", "Zip", "PrecinctName"];
 var fixLabelsColumns = { FirstName: "First Name", LastName: "Last Name", ResultOfContact: "Result Of Contact", Birthday: "Age" };
@@ -36,7 +37,7 @@ function PluginMain(sheet) {
             alert("Sheet has too many voters. Select a precinct or use geofencing to break into a smaller region. ");
         }
         trcGetSheetContents(sheet, function (data) {
-            $('#map_canvas').gmap();
+            mapInit();
             $(window).bind('beforeunload', function () {
                 var count = _sheetCache.getTotalNotYetUploaded();
                 if (count > 0) {
@@ -84,14 +85,6 @@ function is_altered(data, iRow) {
         }
     }
     return false;
-}
-// Set the marker containing the voter to grey.  
-function set_marker_grey(iRow) {
-    $('#map_canvas').gmap('find', 'markers', {}, function (marker) {
-        if ($.inArray(iRow, marker.iRow) > -1) {
-            marker.setIcon(MarkerColors.Grey);
-        }
-    });
 }
 // Called when setting a house-hold wide option, set on all people in the household. 
 function save_entry2(prefix, iRow, columnName, newValue) {
@@ -360,12 +353,9 @@ function mapSheet(info, data) {
     });
     houseHolds.forEach(function (entry) {
         if (entry.lat != 0 && entry.long != 0) {
-            $('#map_canvas').gmap('addMarker', {
-                'position': new google.maps.LatLng(entry.lat, entry.long),
-                'bounds': true,
-                'icon': (entry.altered ? MarkerColors.Grey : entry.partyX.getImage()),
-                'iRow': entry.irows
-            }).click(function () {
+            var loc = mapLatLong(entry.lat, entry.long);
+            mapAddMarker(loc, (entry.altered ? MarkerColors.Grey : entry.partyX.getImage()), entry.irows, // custom data to pass to click func
+            function (iRows) {
                 var nextId = 1;
                 $.mobile.loading('show');
                 $.mobile.navigate("#p");
@@ -373,7 +363,7 @@ function mapSheet(info, data) {
                 var thisHousehold = entry;
                 var x2 = entry; // TODO ?x2
                 var last_address = data["Address"][x2];
-                this.iRow.forEach(function (entry) {
+                iRows.forEach(function (entry) {
                     var content = '';
                     if (last_address != data["Address"][entry]) {
                         last_address = data["Address"][entry];
@@ -437,9 +427,10 @@ function mapSheet(info, data) {
                 back_to_list();
                 $("input[data-type='search']").val('').keyup();
                 $.mobile.loading('hide');
-            });
+            }); // end on-click
         }
     });
+    mapFinishAddingPins();
     $.mobile.loading('hide');
     initGeolocation();
 }
@@ -623,16 +614,8 @@ function initGeolocation() {
 }
 function errorCallback() { }
 function successCallback(position) {
-    var myLatlng = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
-    console.log(myLatlng);
-    var position_not_found = true;
-    $('#map_canvas').gmap('find', 'markers', {}, function (marker) {
-        if (marker.iRow[0] == -1) {
-            marker.setPosition(myLatlng);
-            position_not_found = false;
-        }
-    });
-    if (position_not_found) {
-        $('#map_canvas').gmap('addMarker', { 'position': myLatlng, 'bounds': false, 'icon': 'me.png', 'iRow': [-1] });
-    }
+    mapSetCurrentPos(position.coords.latitude, position.coords.longitude);
+}
+function set_marker_grey(iRow) {
+    mapSetMarkerIcon(iRow, MarkerColors.Grey);
 }

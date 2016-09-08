@@ -3,9 +3,8 @@
 // This calls TRC APIs and binds to specific HTML elements from the page.
 /// <reference path="typings\trc\trc.ts" />
 /// <reference path="localStore.ts" />
+/// <reference path="MapWrapper.ts" />
 
-
-declare var google: any;
 declare var moment: any;
 
 
@@ -51,7 +50,7 @@ function PluginMain(sheet) {
         }
 
         trcGetSheetContents(sheet, function (data) {
-            $('#map_canvas').gmap();
+            mapInit();
 
             $(window).bind('beforeunload', function () {
                 var count = _sheetCache.getTotalNotYetUploaded();
@@ -106,15 +105,6 @@ function is_altered(data: ISheetContents, iRow: number): boolean {
     }
 
     return false;
-}
-
-// Set the marker containing the voter to grey.  
-function set_marker_grey(iRow: number): void {
-    $('#map_canvas').gmap('find', 'markers', {}, function (marker) {
-        if ($.inArray(iRow, marker.iRow) > -1) {
-            marker.setIcon(MarkerColors.Grey);
-        }
-    });
 }
 
 // Called when setting a house-hold wide option, set on all people in the household. 
@@ -448,12 +438,13 @@ function mapSheet(info: ISheetInfoResult, data: ISheetContents) {
 
         if (entry.lat != 0 && entry.long != 0) {
 
-            $('#map_canvas').gmap('addMarker', {
-                'position': new google.maps.LatLng(entry.lat, entry.long),
-                'bounds': true,
-                'icon': (entry.altered ? MarkerColors.Grey : entry.partyX.getImage()),
-                'iRow': entry.irows
-            }).click(function () {
+            var loc = mapLatLong(entry.lat, entry.long);
+            mapAddMarker(
+                loc, 
+                (entry.altered ? MarkerColors.Grey : entry.partyX.getImage()),
+                entry.irows, // custom data to pass to click func
+                
+                function (iRows : number[]) {
                 var nextId = 1;
                 $.mobile.loading('show');
                 $.mobile.navigate("#p");
@@ -462,7 +453,7 @@ function mapSheet(info: ISheetInfoResult, data: ISheetContents) {
                 var thisHousehold = entry;
                 var x2: any = entry; // TODO ?x2
                 var last_address = data["Address"][x2];
-                this.iRow.forEach(function (entry: number) {
+                iRows.forEach(function (entry: number) {
                     var content = '';
                     if (last_address != data["Address"][entry]) {
                         last_address = data["Address"][entry];
@@ -550,11 +541,12 @@ function mapSheet(info: ISheetInfoResult, data: ISheetContents) {
                 $.mobile.loading('hide');
 
 
-            });
+            }); // end on-click
 
 
         }
     });
+    mapFinishAddingPins();
 
     $.mobile.loading('hide');
     initGeolocation();
@@ -807,21 +799,9 @@ function initGeolocation() {
 function errorCallback() { }
 
 function successCallback(position) {
-    var myLatlng = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
+    mapSetCurrentPos(position.coords.latitude, position.coords.longitude);
+}
 
-    console.log(myLatlng);
-    var position_not_found = true;
-    $('#map_canvas').gmap('find', 'markers', {}, function (marker) {
-        if (marker.iRow[0] == -1) {
-            marker.setPosition(myLatlng);
-            position_not_found = false;
-
-        }
-    });
-
-    if (position_not_found) {
-
-        $('#map_canvas').gmap('addMarker', { 'position': myLatlng, 'bounds': false, 'icon': 'me.png', 'iRow': [-1] });
-
-    }
+function set_marker_grey(iRow: number): void {
+    mapSetMarkerIcon(iRow, MarkerColors.Grey);
 }
