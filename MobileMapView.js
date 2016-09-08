@@ -22,6 +22,7 @@ var fixValuesColumns = {
 // Startup function called by the plugin
 function PluginMain(sheet) {
     // clear previous results
+    $("#cache").hide();
     $('#one').css('display', 'block');
     $.mobile.loading('show', {
         text: 'Populating map',

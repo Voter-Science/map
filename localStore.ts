@@ -11,9 +11,21 @@ interface IKeyValue
     newValue : string;
 } 
 
+// Test whether local storage is enabled. 
+// https://mathiasbynens.be/notes/localstorage-pattern
+// Feature test
+var hasStorage = (function() {
+	try {
+		localStorage.setItem("x1", "x2");
+		localStorage.removeItem("x1");
+		return true;
+	} catch (exception) {
+		return false;
+	}
+}());
 
 // Provides a caching wrapper over an ISheetContents.
-// Exposes get/set calls which will push updates to the server, but also maintain a cachin in LocalStore 
+// Exposes get/set calls which will push updates to the server, but also maintain a cache in in LocalStore 
 class SheetCache {
     private _sheetRef: ISheetReference;
     private _data: ISheetContents;
