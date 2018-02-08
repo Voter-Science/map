@@ -1,7 +1,7 @@
 // TypeScript
 // JScript functions for BasicList.Html.
 // This calls TRC APIs and binds to specific HTML elements from the page.
-/// <reference path="typings\trc\trc.ts" />
+/// <reference path="./trc.ts" />
 /// <reference path="localStore.ts" />
 /// <reference path="MapWrapper.ts" />
 
@@ -50,7 +50,7 @@ function PluginMain(sheet) {
         }
 
         trcGetSheetContents(sheet, function (data) {
-            mapInit();
+            _xmap.mapInit();
 
             $(window).bind('beforeunload', function () {
                 var count = _sheetCache.getTotalNotYetUploaded();
@@ -438,8 +438,8 @@ function mapSheet(info: ISheetInfoResult, data: ISheetContents) {
 
         if (entry.lat != 0 && entry.long != 0) {
 
-            var loc = mapLatLong(entry.lat, entry.long);
-            mapAddMarker(
+            var loc = _xmap.mapLatLong(entry.lat, entry.long);
+            _xmap.mapAddMarker(
                 loc, 
                 (entry.altered ? MarkerColors.Grey : entry.partyX.getImage()),
                 entry.irows, // custom data to pass to click func
@@ -546,7 +546,7 @@ function mapSheet(info: ISheetInfoResult, data: ISheetContents) {
 
         }
     });
-    mapFinishAddingPins();
+    _xmap.mapFinishAddingPins();
 
     $.mobile.loading('hide');
     initGeolocation();
@@ -799,9 +799,9 @@ function initGeolocation() {
 function errorCallback() { }
 
 function successCallback(position) {
-    mapSetCurrentPos(position.coords.latitude, position.coords.longitude);
+    _xmap.mapSetCurrentPos(position.coords.latitude, position.coords.longitude);
 }
 
 function set_marker_grey(iRow: number): void {
-    mapSetMarkerIcon(iRow, MarkerColors.Grey);
+    _xmap.mapSetMarkerIcon(iRow, MarkerColors.Grey);
 }

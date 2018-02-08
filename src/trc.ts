@@ -110,8 +110,10 @@ function trcGetSheetContents(
     sheetRef: ISheetReference,
     successFunc: (data: ISheetContents) => void
     ): void {
-    var url = sheetRef.Server + "/sheets/" + sheetRef.SheetId;
 
+        // var filter = encodeURIComponent("IsFalse(xvoted)");
+        // var url = sheetRef.Server + "/sheets/" + sheetRef.SheetId +"?Filter=" + filter;
+        var url = sheetRef.Server + "/sheets/" + sheetRef.SheetId;
     $.ajax({
         url: url,
         type: 'GET',

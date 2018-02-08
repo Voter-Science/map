@@ -1,6 +1,11 @@
 ﻿<!DOCTYPE html>
 
 <html lang="en">
+
+        <script src="jq/jquery-1.4.5.min.js"></script>
+        <script src="jq/jquery.mobile-1.4.5.min.js"></script>
+        <script src="https://trcanvasdata.blob.core.windows.net/code2/plugin.js"></script>
+
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -133,20 +138,25 @@
 
 </div>
 
+<!-- Bing Maps  
 <script type="text/javascript" src="https://ecn.dev.virtualearth.net/mapcontrol/mapcontrol.ashx?v=7.0&s=1"></script>
+<script src="MapWrapper_bing.js"></script>
+-->
 
-<script src="jq/jquery-2.1.4.min.js"></script>
-<script src="jq/jquery.mobile-1.4.5.min.js"></script>
+<!-- Google MAps -->
+<script src="https://maps.googleapis.com/maps/api/js?sensor=false&key=AIzaSyDTfeCKX5vjOok3DnrhZCKVRqkxXRekJRQ" type="text/javascript"></script>
+<script src="juimaps/min/jquery.ui.map.full.min.js"></script>
+<script src="juimaps/min/jquery.ui.map.extensions.js"></script>
+<script src="MapWrapper_google.js"></script>
 
 
-<script src="MapWrapper2.js"></script>
-<script src="moment-with-locales.js"></script>
-<script src="lz-string.min.js"></script>
+<script src="other/moment-with-locales.js"></script>
+<script src="other/lz-string.min.js"></script>
 
 <script src="localStore.js"> </script>
+<script src="trc.js"> </script>
 <script src="MobileMapView.js"> </script>
-<script src="https://trcanvasdata.blob.core.windows.net/code/trc.js"> </script>
-<script src="https://trcanvasdata.blob.core.windows.net/code/plugin.js"></script>
+
 <script type="text/javascript">
     $( document ).ready(function() {
 

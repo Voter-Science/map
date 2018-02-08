@@ -1,6 +1,6 @@
 // TypeScript
 
-/// <reference path="typings\trc\trc.ts" />
+/// <reference path="./trc.ts" />
 
 // Describe information in a LocalStorage key
 interface IKeyValue

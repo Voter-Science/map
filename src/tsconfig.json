@@ -1,0 +1,15 @@
+{
+    "compilerOptions": {
+        "module": "commonjs",
+        "noImplicitAny": false, // $$$ fix this 
+        "removeComments": true,
+        "target": "es5", // es5 for browsers
+        // BlueBird requires es2015
+        "lib": [
+            "es2015",
+            "dom",
+            "scripthost"
+        ],
+        "outDir": "../public"
+    }
+}
