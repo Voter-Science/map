@@ -1,10 +1,10 @@
 ﻿{
     // ID must be unique on the gallery
-    "Id": "Map.Beta",
+    "Id": "Map",
     "Name": "Map View (Preview)",
     "Author" :  "Voter-Science",
     "Website" :  "https://github.com/voter-science/map",
-    "Description": "(preview) A map view for editing. (preview of next version)",        
-    "Version": "2.0.0", // User SemVer
+    "Description": "A map view for canvassing.",
+    "Version": "2.1.0", // User SemVer
     "Tags": [ "map", "doorbell" ]
 }

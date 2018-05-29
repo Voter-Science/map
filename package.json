@@ -24,7 +24,7 @@
   },
   "homepage": "https://github.com/Voter-Science/map#readme",
   "devDependencies": {
-    "trc.runplugin": "^1.3.0",
+    "trc.runplugin": "^1.4.3",
     "typescript": "^2.6.2"
   }
 }
