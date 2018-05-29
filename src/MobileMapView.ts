@@ -309,6 +309,8 @@ class GeneralColorFactory implements IHouseholdColorFactory {
            Childcare: AFSCME: Green
            Teachers: OEA: Orange
         */
+
+        /*
         var worker = data["Worker_Type__c"][iRow];
         if (worker == "Childcare") {
             return new GeneralColor(MarkerColors.Green);
@@ -319,7 +321,8 @@ class GeneralColorFactory implements IHouseholdColorFactory {
             return new GeneralColor(MarkerColors.Orange);
         } else {
             return new GeneralColor(MarkerColors.Unknown);
-        }
+        }*/
+        return new GeneralColor(MarkerColors.Yellow);
     }
 }
 
