@@ -310,19 +310,24 @@ class GeneralColorFactory implements IHouseholdColorFactory {
            Teachers: OEA: Orange
         */
 
-        /*
         var worker = data["Worker_Type__c"][iRow];
-        if (worker == "Childcare") {
-            return new GeneralColor(MarkerColors.Green);
-        } else if (worker == "Healthcare") {
-            return new GeneralColor(MarkerColors.Purple);
+        if (!!worker) {
+            var x = worker.toLowerCase();
+            if (x.startsWith("childcare")) {  // Childcare - Exempt, Childcare - Licensed
+                return new GeneralColor(MarkerColors.Green);
+            } else if (x == "healthcare") {
+                return new GeneralColor(MarkerColors.Purple);
+            } else if (x == "teacher") {
+                return new GeneralColor(MarkerColors.Orange);
+            } else if (x == "state worker") {
+                return new GeneralColor(MarkerColors.Blue);
+            } else if (x == "language access provider") {
+                return new GeneralColor(MarkerColors.Yellow);
+            }
         }
-        else if (worker == "Teacher") {
-            return new GeneralColor(MarkerColors.Orange);
-        } else {
-            return new GeneralColor(MarkerColors.Unknown);
-        }*/
-        return new GeneralColor(MarkerColors.Yellow);
+
+        return new GeneralColor(MarkerColors.Unknown);
+
     }
 }
 
@@ -443,108 +448,108 @@ function mapSheet(info: ISheetInfoResult, data: ISheetContents) {
 
             var loc = _xmap.mapLatLong(entry.lat, entry.long);
             _xmap.mapAddMarker(
-                loc, 
+                loc,
                 (entry.altered ? MarkerColors.Grey : entry.partyX.getImage()),
                 entry.irows, // custom data to pass to click func
-                
-                function (iRows : number[]) {
-                var nextId = 1;
-                $.mobile.loading('show');
-                $.mobile.navigate("#p");
-                $("#set").html('');
 
-                var thisHousehold = entry;
-                var x2: any = entry; // TODO ?x2
-                var last_address = data["Address"][x2];
-                iRows.forEach(function (entry: number) {
-                    var content = '';
-                    if (last_address != data["Address"][entry]) {
-                        last_address = data["Address"][entry];
-                        content += ' <li data-role="list-divider">Address: ' + last_address + '</li>';
-                    }
+                function (iRows: number[]) {
+                    var nextId = 1;
+                    $.mobile.loading('show');
+                    $.mobile.navigate("#p");
+                    $("#set").html('');
 
-                    var d = new Date(Date.parse(data["Birthday"][entry]));
-                    content += '<li id="' + entry + '"><a href="#">' + data["FirstName"][entry] + " " + data["LastName"][entry] + ', ' + _calculateAge(d) + data["Gender"][entry] + '' +
-                        '<img src="' + (is_altered(data, entry) ? MarkerColors.Grey : getImgParty(data, entry)) + '"></a>' +
-                        '</li>';
-
-
-                    $("#set").append(content);
-                    nextId++;
-                });
-
-
-                $('#household_fields').html('');
-
-                // Display househould wide quick shortcuts. 
-                $.each(info.Columns, function (key, ivalue) {
-                    if (ivalue.Name == "ResultOfContact") {
-                        var columnName = ivalue.Name;
-                        var html = create_field("household_", columnName, ivalue.DisplayName, "", ivalue.IsReadOnly, ivalue.Type, ivalue.PossibleValues);
-                        $('#household_fields').append("<div><b>Househould wide option:</b></div>").append(html);
-                        var htmlId = "#household_" + columnName;
-                        $(htmlId).change(function () {
-                            var newValue = this.value;
-
-                            // When changing household, apply choice to all voters, and then directly return to map 
-                            for (var i in thisHousehold.irows) {
-                                var rowIdx = thisHousehold.irows[i];
-                                //alert('value is changed2:' + newValue  +'for row ' + rowIdx);
-                                save_entry2("details_", rowIdx, columnName, newValue);
-                            }
-
-                            $.mobile.back(); // Back to map page. 
-                        })
-                        initialize_field("household_", ivalue.Name, ivalue.Type, ivalue.PossibleValues);
-
-                    }
-                });
-
-                $('#set').listview();
-                if (nextId < 10) {
-
-                    $("#set").prev("form.ui-filterable").hide();
-
-                } else {
-
-                    $("#set").prev("form.ui-filterable").show();
-
-                }
-                $('#set').listview('refresh');
-                $('#set').delegate('li', 'click',
-                    function () {
-                        if ($(this).prop('id') != 'NaN') {
-                            ///var id=$(this).attr('id');
-                            var id = $(this).prop('id');
-                            $("#the_list").hide();
-                            $("#the_details").show();
-
-                            $("#the_details_form").html("");
-                            $("#details_save_button").unbind();
-                            $('#details_save_button').addClass('ui-disabled');
-
-                            $("#details_save_button").click(function () {
-
-                                var iRow = parseInt(id);
-                                save_entry("details_", iRow, data, info);
-                            });
-
-                            $.each(info.Columns, function (key, ivalue) {
-                                $("#the_details_form").append(create_field("details_", ivalue.Name, ivalue.DisplayName, data[ivalue.Name][id], ivalue.IsReadOnly, ivalue.Type, ivalue.PossibleValues));
-                                initialize_field("details_", ivalue.Name, ivalue.Type, ivalue.PossibleValues);
-
-                            });
+                    var thisHousehold = entry;
+                    var x2: any = entry; // TODO ?x2
+                    var last_address = data["Address"][x2];
+                    iRows.forEach(function (entry: number) {
+                        var content = '';
+                        if (last_address != data["Address"][entry]) {
+                            last_address = data["Address"][entry];
+                            content += ' <li data-role="list-divider">Address: ' + last_address + '</li>';
                         }
 
+                        var d = new Date(Date.parse(data["Birthday"][entry]));
+                        content += '<li id="' + entry + '"><a href="#">' + data["FirstName"][entry] + " " + data["LastName"][entry] + ', ' + _calculateAge(d) + data["Gender"][entry] + '' +
+                            '<img src="' + (is_altered(data, entry) ? MarkerColors.Grey : getImgParty(data, entry)) + '"></a>' +
+                            '</li>';
+
+
+                        $("#set").append(content);
+                        nextId++;
                     });
-                back_to_list();
-                $("input[data-type='search']").val('').keyup();
 
 
-                $.mobile.loading('hide');
+                    $('#household_fields').html('');
+
+                    // Display househould wide quick shortcuts. 
+                    $.each(info.Columns, function (key, ivalue) {
+                        if (ivalue.Name == "ResultOfContact") {
+                            var columnName = ivalue.Name;
+                            var html = create_field("household_", columnName, ivalue.DisplayName, "", ivalue.IsReadOnly, ivalue.Type, ivalue.PossibleValues);
+                            $('#household_fields').append("<div><b>Househould wide option:</b></div>").append(html);
+                            var htmlId = "#household_" + columnName;
+                            $(htmlId).change(function () {
+                                var newValue = this.value;
+
+                                // When changing household, apply choice to all voters, and then directly return to map 
+                                for (var i in thisHousehold.irows) {
+                                    var rowIdx = thisHousehold.irows[i];
+                                    //alert('value is changed2:' + newValue  +'for row ' + rowIdx);
+                                    save_entry2("details_", rowIdx, columnName, newValue);
+                                }
+
+                                $.mobile.back(); // Back to map page. 
+                            })
+                            initialize_field("household_", ivalue.Name, ivalue.Type, ivalue.PossibleValues);
+
+                        }
+                    });
+
+                    $('#set').listview();
+                    if (nextId < 10) {
+
+                        $("#set").prev("form.ui-filterable").hide();
+
+                    } else {
+
+                        $("#set").prev("form.ui-filterable").show();
+
+                    }
+                    $('#set').listview('refresh');
+                    $('#set').delegate('li', 'click',
+                        function () {
+                            if ($(this).prop('id') != 'NaN') {
+                                ///var id=$(this).attr('id');
+                                var id = $(this).prop('id');
+                                $("#the_list").hide();
+                                $("#the_details").show();
+
+                                $("#the_details_form").html("");
+                                $("#details_save_button").unbind();
+                                $('#details_save_button').addClass('ui-disabled');
+
+                                $("#details_save_button").click(function () {
+
+                                    var iRow = parseInt(id);
+                                    save_entry("details_", iRow, data, info);
+                                });
+
+                                $.each(info.Columns, function (key, ivalue) {
+                                    $("#the_details_form").append(create_field("details_", ivalue.Name, ivalue.DisplayName, data[ivalue.Name][id], ivalue.IsReadOnly, ivalue.Type, ivalue.PossibleValues));
+                                    initialize_field("details_", ivalue.Name, ivalue.Type, ivalue.PossibleValues);
+
+                                });
+                            }
+
+                        });
+                    back_to_list();
+                    $("input[data-type='search']").val('').keyup();
 
 
-            }); // end on-click
+                    $.mobile.loading('hide');
+
+
+                }); // end on-click
 
 
         }
