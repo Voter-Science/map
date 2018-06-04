@@ -87,8 +87,21 @@ function find_altered_columns(info: ISheetInfoResult): void {
 }
 
 
+
+// Is this household "targeted"
+function is_targeted(data: ISheetContents, iRow: number): boolean {
+    var targets = data["XTargetPri"]; // could be missing
+    if (!targets) { return true; } // If no targeted column present, then assume all voters are targetted
+    var value = targets[iRow];
+    return value == "1";
+}
+
+function should_visit(data: ISheetContents, iRow: number): boolean {
+    return is_targeted(data, iRow) && !is_altered(data, iRow);
+}
+
 // $$$ NationBuilder questions are of the form 'Q12' where 12 is the question id. 
-// True if the row has been altered
+// True if the row has been altered (visited)
 function is_altered(data: ISheetContents, iRow: number): boolean {
     // Switch to using a "Last modified" time stamp
     // Not all sheets will have a ResultOfContact column.
@@ -369,7 +382,7 @@ function mapSheet(info: ISheetInfoResult, data: ISheetContents) {
             address: data["Address"][iRow],
             irows: [iRow],
             partyX: getColor(data, iRow),
-            altered: is_altered(data, iRow)
+            altered: false // is_altered(data, iRow) // 
 
         };
         var allready_in_idx = -1;
@@ -379,9 +392,9 @@ function mapSheet(info: ISheetInfoResult, data: ISheetContents) {
         houseHolds.forEach(function (entry) {
             if (entry.lat == itm.lat && entry.long == itm.long) {
                 allready_in_idx = i;
+                var existing = houseHolds[allready_in_idx];                
                 if (itm.altered) {
-                    houseHolds[allready_in_idx].altered = true;
-                    houseHolds[allready_in_idx].partyX = houseHolds[allready_in_idx].partyX.merge(itm.partyX);
+                    existing.partyX = existing.partyX.merge(itm.partyX);
                 }
                 return;
             }
@@ -393,8 +406,9 @@ function mapSheet(info: ISheetInfoResult, data: ISheetContents) {
         } else {
             houseHolds.push(itm);
         }
-
     }
+    calculateIsAltered(houseHolds, data);
+
     $("#set_in_search").html('');
     var nextId = 1;
 
@@ -470,7 +484,7 @@ function mapSheet(info: ISheetInfoResult, data: ISheetContents) {
 
                         var d = new Date(Date.parse(data["Birthday"][entry]));
                         content += '<li id="' + entry + '"><a href="#">' + data["FirstName"][entry] + " " + data["LastName"][entry] + ', ' + _calculateAge(d) + data["Gender"][entry] + '' +
-                            '<img src="' + (is_altered(data, entry) ? MarkerColors.Grey : getImgParty(data, entry)) + '"></a>' +
+                            '<img src="' + (!should_visit(data, entry) ? MarkerColors.Grey : getImgParty(data, entry)) + '"></a>' +
                             '</li>';
 
 
@@ -558,6 +572,34 @@ function mapSheet(info: ISheetInfoResult, data: ISheetContents) {
 
     $.mobile.loading('hide');
     initGeolocation();
+}
+
+function calculateIsAltered(houseHolds: IHousehold[], data : ISheetContents) 
+{
+    for(var i in houseHolds)
+    {
+        var h = houseHolds[i];
+                
+        h.altered = true; // means we skip househould.
+
+        // Look at each voter in this household 
+        // If we've visited any voters in this household, then don't visit it again.
+        // there must be at least one target in the household to visit it. 
+        for(var j in h.irows) {
+            var iRow = h.irows[j]; 
+
+            var visted = is_altered(data, iRow);
+            if (visted) { 
+                // If we've already visited this household, then don't visit it again
+                h.altered = true;
+                break; 
+            }
+            var shouldVisit = should_visit(data, iRow);
+            if (shouldVisit) {
+                h.altered = false;
+            }
+        }
+    }
 }
 
 function back_to_list() {
