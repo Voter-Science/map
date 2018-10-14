@@ -456,7 +456,7 @@ function mapSheet(info: ISheetInfoResult, data: ISheetContents) {
 
     });
 
-    houseHolds.forEach(function (entry) {
+    houseHolds.forEach(function (entry : IHousehold) {
 
         if (entry.lat != 0 && entry.long != 0) {
 
@@ -500,7 +500,14 @@ function mapSheet(info: ISheetInfoResult, data: ISheetContents) {
                         if (ivalue.Name == "ResultOfContact") {
                             var columnName = ivalue.Name;
                             var html = create_field("household_", columnName, ivalue.DisplayName, "", ivalue.IsReadOnly, ivalue.Type, ivalue.PossibleValues);
-                            $('#household_fields').append("<div><b>Househould wide option:</b></div>").append(html);
+
+                            var route = $('<a>', {
+                                text : "(Route to here)",
+                                target : "_blank",
+                                href: "https://maps.apple.com?daddr="+ entry.lat +"," + entry.long
+                            });
+
+                            $('#household_fields').append("<div><b>Household wide option:</b></div>").append(route).append(html);
                             var htmlId = "#household_" + columnName;
                             $(htmlId).change(function () {
                                 var newValue = this.value;
