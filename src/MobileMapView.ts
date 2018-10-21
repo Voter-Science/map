@@ -79,6 +79,7 @@ function find_altered_columns(info: ISheetInfoResult): void {
             // Ignore editable columns that we provided.
             if ((qn != "party") &&
                 (qn != "cellphone") &&
+                (qn != "comments") &&  // don't clear this when we reset
                 (qn != "email")) {
                 _alteredNames.push(q.Name);
             }
