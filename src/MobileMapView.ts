@@ -80,7 +80,8 @@ function find_altered_columns(info: ISheetInfoResult): void {
             if ((qn != "party") &&
                 (qn != "cellphone") &&
                 (qn != "comments") &&  // don't clear this when we reset
-                (qn != "email")) {
+                (qn != "email") && 
+                (qn != "xcolor")) {
                 _alteredNames.push(q.Name);
             }
         }
@@ -216,7 +217,9 @@ interface IHouseholdColorFactory {
 // Worker_Type__c
 function getColor(data: ISheetContents, iRow: number): IHouseholdColor {
     if (_colorFactor == null) {
-        if (data["Worker_Type__c"] != undefined) {
+        if (data["XColor"] != undefined) {
+            _colorFactor = new XColorFactory();
+        } else if (data["Worker_Type__c"] != undefined) {
             _colorFactor = new GeneralColorFactory();
         } else {
             _colorFactor = new PartyHouseholdColorFactory();
@@ -312,6 +315,30 @@ class GeneralColor implements IHouseholdColor {
     }
     public getImage(): string {
         return this._marker;
+    }
+}
+
+class XColorFactory  implements IHouseholdColorFactory {
+    private static _map : any = {
+        'r' : MarkerColors.Red,
+        'g' : MarkerColors.Green,
+        'b' : MarkerColors.Blue,
+        'p' : MarkerColors.Purple,
+        'o' : MarkerColors.Orange,
+        'y' : MarkerColors.Yellow
+    };
+    getColor(data: ISheetContents, iRow: number): IHouseholdColor {
+        var worker = data["XColor"][iRow];
+        if (!!worker)
+        {
+            var x = worker.toLowerCase();
+            var color = XColorFactory._map[x];
+            if (color) {
+                return new GeneralColor(color);
+            }
+        }
+
+        return new GeneralColor(MarkerColors.Unknown);
     }
 }
 
