@@ -32,6 +32,6 @@ build_script:
         timestamp=(Get-Date -Format "o");
         htmlurl="https://github.com/" + $env:APPVEYOR_REPO_NAME + "/commit/" + $env:APPVEYOR_REPO_COMMIT;
     };
-    $data3 | ConvertTo-Json | Set-Content -Path "dist\buildver.json"
+    $data3 | ConvertTo-Json | Set-Content -Path "public\buildver.json"
 
 - npm run build
