@@ -24,4 +24,14 @@ artifacts:
 # Don't actually build.
 # build: off
 build_script:
+- ps: 
+    $data3 = [PSCustomObject]@{
+        repo = $env:APPVEYOR_REPO_NAME;
+        branch = $env:APPVEYOR_REPO_BRANCH ;
+        commit = $env:APPVEYOR_REPO_COMMIT;
+        timestamp=(Get-Date -Format "o");
+        htmlurl="https://github.com/" + $env:APPVEYOR_REPO_NAME + "/commit/" + $env:APPVEYOR_REPO_COMMIT;
+    };
+    $data3 | ConvertTo-Json | Set-Content -Path "dist\buildver.json"
+
 - npm run build
